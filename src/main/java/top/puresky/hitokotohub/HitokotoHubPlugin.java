@@ -3,6 +3,7 @@ package top.puresky.hitokotohub;
 import org.springframework.stereotype.Component;
 import run.halo.app.extension.Scheme;
 import run.halo.app.extension.SchemeManager;
+import run.halo.app.extension.index.IndexSpecs;
 import run.halo.app.plugin.BasePlugin;
 import run.halo.app.plugin.PluginContext;
 import top.puresky.hitokotohub.extension.Category;
@@ -27,8 +28,15 @@ public class HitokotoHubPlugin extends BasePlugin {
     @Override
     public void start() {
         // 注册自定义模型
-        schemeManager.register(Sentence.class);
+        schemeManager.register(Sentence.class, sentenceIndexSpecs -> sentenceIndexSpecs.add(
+            IndexSpecs.<Sentence, String>single("spec.categoryName", String.class)
+                .indexFunc(sentence -> sentence.getSpec().getCategoryName())
+                .nullable(true)
+                .build()
+        ));
+
         schemeManager.register(Category.class);
+
         System.out.println("✅ 一言数据中心插件启动成功！");
     }
 

@@ -3,9 +3,12 @@ package top.puresky.hitokotohub.reconciler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import run.halo.app.extension.ExtensionClient;
+import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.controller.Controller;
 import run.halo.app.extension.controller.ControllerBuilder;
 import run.halo.app.extension.controller.Reconciler;
+import run.halo.app.extension.index.query.Queries;
+import top.puresky.hitokotohub.extension.Category;
 import top.puresky.hitokotohub.extension.Sentence;
 
 @Component
@@ -16,8 +19,26 @@ public class SentenceReconciler implements Reconciler<Reconciler.Request> {
 
     @Override
     public Result reconcile(Request request) {
-        // ...
-        return null;
+        client.fetch(Sentence.class, request.name()).ifPresent(sentence -> {
+            // 获取当前句子的分类ID
+            String categoryName = sentence.getSpec().getCategoryName();
+            // 构建句子查询选项
+            ListOptions listSentenceOptions = ListOptions.builder()
+                .fieldQuery(Queries.equal("spec.categoryName", categoryName))
+                .build();
+            // 获取当前句子所属分类的数量
+            Integer sentenceCount =
+                client.listAll(Sentence.class, listSentenceOptions, null).size();
+            // 更新相关分类下句子数量状态
+            client.fetch(Category.class, categoryName).ifPresent(category -> {
+                if (category.getStatus() == null) {
+                    category.setStatus(new Category.Status());
+                }
+                category.getStatus().setSentenceCount(sentenceCount);
+                client.update(category);
+            });
+        });
+        return new Result(false, null);
     }
 
     @Override
