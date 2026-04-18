@@ -38,6 +38,6 @@ public class Category extends AbstractExtension {
     @Schema(name = "CategoryStatus")
     public static class Status {
         @Schema(description = "句子数量")
-        private Integer sentenceCount;
+        private long sentenceCount;
     }
 }
