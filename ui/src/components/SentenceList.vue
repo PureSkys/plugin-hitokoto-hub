@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { categoryCoreApiClient, sentenceCoreApiClient } from '@/api'
-import type { Sentence, Category } from '@/api/generated'
+import {onMounted, ref} from 'vue'
+import {categoryCoreApiClient, sentenceCoreApiClient} from '@/api'
+import type {Category, Sentence} from '@/api/generated'
 import {
-  VButton,
-  VEmpty,
-  VLoading,
-  VModal,
-  VSpace,
-  VTag,
-  VDropdown,
-  VDropdownItem,
-  VPagination,
-  VEntityContainer,
-  VEntity,
-  VEntityField,
+  Dialog,
   IconAddCircle,
   Toast,
-  Dialog,
+  VButton,
+  VDropdown,
+  VDropdownItem,
+  VEmpty,
+  VEntity,
+  VEntityContainer,
+  VEntityField,
+  VLoading,
+  VModal,
+  VPagination,
+  VSpace,
+  VTag,
 } from '@halo-dev/components'
 
 const loading = ref(false)

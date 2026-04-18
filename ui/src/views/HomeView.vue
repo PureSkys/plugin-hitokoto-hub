@@ -4,11 +4,7 @@ import SentenceList from "@/components/SentenceList.vue";
 import CategoryList from "@/components/CategoryList.vue";
 import Overview from "@/components/Overview.vue";
 import {useRouteQuery} from "@vueuse/router";
-import {
-  VCard,
-  VPageHeader,
-  VTabbar,
-} from "@halo-dev/components";
+import {VCard, VPageHeader, VTabbar,} from "@halo-dev/components";
 
 
 const tabs = shallowRef([

@@ -1,6 +1,7 @@
 package top.puresky.hitokotohub.reconciler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import run.halo.app.extension.ExtensionClient;
 import run.halo.app.extension.ListOptions;
@@ -28,7 +29,7 @@ public class SentenceReconciler implements Reconciler<Reconciler.Request> {
                 .build();
             // 获取当前句子所属分类的数量
             Integer sentenceCount =
-                client.listAll(Sentence.class, listSentenceOptions, null).size();
+                client.listAll(Sentence.class, listSentenceOptions, Sort.unsorted()).size();
             // 更新相关分类下句子数量状态
             client.fetch(Category.class, categoryName).ifPresent(category -> {
                 if (category.getStatus() == null) {
