@@ -1,4 +1,5 @@
 export * from './add-operation';
+export * from './batch-result';
 export * from './category';
 export * from './category-list';
 export * from './category-spec';

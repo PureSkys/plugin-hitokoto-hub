@@ -10,6 +10,7 @@ configuration.ts
 git_push.sh
 index.ts
 models/add-operation.ts
+models/batch-result.ts
 models/category-list.ts
 models/category-spec.ts
 models/category-status.ts
