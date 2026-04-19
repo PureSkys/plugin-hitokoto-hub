@@ -35,17 +35,9 @@ public class SentenceEndpoint implements CustomEndpoint {
                     .requestBody(requestBodyBuilder().implementation(Sentence[].class))
                     .response(responseBuilder().implementation(BatchResult.class))
             )
-            .GET("/sentence/get", this::getSentence,
-                builder -> builder.operationId("getSentence")
-                    .description("Get a sentence")
-                    .tag(tag)
-            )
             .build();
     }
 
-    private Mono<ServerResponse> getSentence(ServerRequest request) {
-        return ServerResponse.ok().bodyValue("getSentence");
-    }
 
     private Mono<ServerResponse> batchCreateSentence(ServerRequest request) {
         // 统计总数、成功数、失败数
@@ -53,7 +45,6 @@ public class SentenceEndpoint implements CustomEndpoint {
         AtomicInteger success = new AtomicInteger(0);
         AtomicInteger failed = new AtomicInteger(0);
         return request.bodyToFlux(Sentence.class)
-            .doOnNext(this::initMetadata)
             .flatMap(sentence -> client.create(sentence)
                 .doOnSuccess(s -> {
                     success.incrementAndGet();  // 成功+1
@@ -73,17 +64,6 @@ public class SentenceEndpoint implements CustomEndpoint {
             .flatMap(result -> ServerResponse.ok().bodyValue(result));
     }
 
-    private void initMetadata(Sentence sentence) {
-        // 统一使用sentence-作为generateName前缀
-        sentence.getMetadata().setGenerateName("sentence-");
-        // 初始化状态
-        if (sentence.getStatus() == null) {
-            Sentence.Status status = new Sentence.Status();
-            status.setViewCount(0);
-            status.setLikeCount(0);
-            sentence.setStatus(status);
-        }
-    }
 
     @Override
     public GroupVersion groupVersion() {
