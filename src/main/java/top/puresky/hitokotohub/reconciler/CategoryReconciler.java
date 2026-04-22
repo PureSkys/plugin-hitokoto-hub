@@ -22,21 +22,11 @@ public class CategoryReconciler implements Reconciler<Reconciler.Request> {
     private final ExtensionClient client;
     private static final String FINALIZER_NAME = "hitokotohub.puresky.top/category-protector";
 
-    private void initStatus(Category category) {
-        // 第一次创建 → 自动初始化
-        if (category.getStatus() == null) {
-            category.setStatus(new Category.Status());
-        }
-        category.getStatus().setSentenceCount(0);
-        client.update(category);
-    }
 
     @Override
     public Result reconcile(Request request) {
         client.fetch(Category.class, request.name()).ifPresent(category -> {
-            if (category.getStatus() == null) {
-                initStatus(category);
-            }
+
             if (ExtensionOperator.isDeleted(category)) {
                 // 添加删除分类终结器
                 ExtensionUtil.addFinalizers(category.getMetadata(), Set.of(FINALIZER_NAME));
@@ -44,9 +34,7 @@ public class CategoryReconciler implements Reconciler<Reconciler.Request> {
 
                 String categoryMetadataName = category.getMetadata().getName();
                 ListOptions listSentenceOptions = ListOptions.builder()
-                    .fieldQuery(
-                        Queries.equal("spec.categoryName", categoryMetadataName))
-                    .build();
+                    .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName)).build();
                 client.listAll(Sentence.class, listSentenceOptions, Sort.unsorted())
                     .forEach(client::delete);
                 // 移除删除分类终结器
@@ -59,8 +47,6 @@ public class CategoryReconciler implements Reconciler<Reconciler.Request> {
 
     @Override
     public Controller setupWith(ControllerBuilder builder) {
-        return builder
-            .extension(new Category())
-            .build();
+        return builder.extension(new Category()).build();
     }
 }

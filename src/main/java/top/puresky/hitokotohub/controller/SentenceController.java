@@ -49,8 +49,8 @@ public class SentenceController {
 
     @Data
     public static class BatchCreateSentenceResult {
-        private int total;
-        private int success;
-        private int failed;
+        private long total;
+        private long success;
+        private long failed;
     }
 }

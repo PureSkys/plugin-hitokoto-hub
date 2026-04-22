@@ -18,15 +18,6 @@ public class SentenceReconciler implements Reconciler<Reconciler.Request> {
 
     private final ExtensionClient client;
 
-    private void initStatus(Sentence sentence) {
-        // 第一次创建 → 自动初始化
-        if (sentence.getStatus() == null) {
-            sentence.setStatus(new Sentence.Status());
-        }
-        sentence.getStatus().setLikeCount(0);
-        sentence.getStatus().setViewCount(0);
-        client.update(sentence);
-    }
 
     @Override
     public Result reconcile(Request request) {
@@ -34,20 +25,15 @@ public class SentenceReconciler implements Reconciler<Reconciler.Request> {
             if (ExtensionOperator.isDeleted(sentence)) {
                 return;
             }
-            if (sentence.getStatus() == null) {
-                initStatus(sentence);
-            }
             // 获取当前句子的分类ID
             String categoryMetadataName = sentence.getSpec().getCategoryName();
             // 构建句子查询选项
             ListOptions listSentenceOptions = ListOptions.builder()
-                .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName))
-                .build();
+                .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName)).build();
             // 更新相关分类下句子数量状态
             client.fetch(Category.class, categoryMetadataName).ifPresentOrElse(category -> {
                 // 获取当前句子所属分类的数量
-                long sentenceCount =
-                    client.countBy(Sentence.class, listSentenceOptions);
+                long sentenceCount = client.countBy(Sentence.class, listSentenceOptions);
                 if (category.getStatus() == null) {
                     category.setStatus(new Category.Status());
                 }
@@ -60,8 +46,6 @@ public class SentenceReconciler implements Reconciler<Reconciler.Request> {
 
     @Override
     public Controller setupWith(ControllerBuilder builder) {
-        return builder
-            .extension(new Sentence())
-            .build();
+        return builder.extension(new Sentence()).build();
     }
 }
