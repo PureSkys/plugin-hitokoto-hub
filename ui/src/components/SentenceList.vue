@@ -65,9 +65,9 @@
 
 <script setup lang="ts">
 
-import {VButton, IconRefreshLine, VCard, VPagination, VSpace} from "@halo-dev/components";
+import {IconRefreshLine, VButton, VCard, VPagination, VSpace} from "@halo-dev/components";
 import {computed, onMounted, ref} from "vue";
-import {categoryCoreApiClient, sentenceCoreApiClient} from "@/api"
+import {categoryCoreApiClient} from "@/api"
 
 
 const page = ref(1);
