@@ -28,12 +28,21 @@ public class HitokotoHubPlugin extends BasePlugin {
     @Override
     public void start() {
         // 注册自定义模型
-        schemeManager.register(Sentence.class, sentenceIndexSpecs -> sentenceIndexSpecs.add(
-            IndexSpecs.<Sentence, String>single("spec.categoryName", String.class)
-                .indexFunc(sentence -> sentence.getSpec().getCategoryName())
-                .nullable(true)
-                .build()
-        ));
+        schemeManager.register(Sentence.class, sentenceIndexSpecs -> {
+            sentenceIndexSpecs.add(
+                IndexSpecs.<Sentence, String>single("spec.categoryName", String.class)
+                    .indexFunc(sentence -> sentence.getSpec().getCategoryName())
+                    .nullable(false)
+                    .build()
+            );
+
+            sentenceIndexSpecs.add(
+                IndexSpecs.<Sentence, Boolean>single("status.isPublished", Boolean.class)
+                    .indexFunc(sentence -> sentence.getStatus().isPublished())
+                    .nullable(false)
+                    .build()
+            );
+        });
 
         schemeManager.register(Category.class);
 
