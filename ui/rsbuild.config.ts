@@ -1,10 +1,10 @@
-import { rsbuildConfig } from '@halo-dev/ui-plugin-bundler-kit';
+import {rsbuildConfig} from '@halo-dev/ui-plugin-bundler-kit';
 import Icons from 'unplugin-icons/rspack';
-import { pluginSass } from '@rsbuild/plugin-sass';
-import type { RsbuildConfig } from '@rsbuild/core';
+import {pluginSass} from '@rsbuild/plugin-sass';
+import type {RsbuildConfig} from '@rsbuild/core';
 import AutoImport from 'unplugin-auto-import/rspack';
 import Components from 'unplugin-vue-components/rspack';
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
+import {ElementPlusResolver} from 'unplugin-vue-components/resolvers';
 
 export default rsbuildConfig({
   rsbuild: {
