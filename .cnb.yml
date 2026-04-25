@@ -1,0 +1,20 @@
+master:
+    push:
+        - name: "sync git run"
+          stages:
+              - name: "sync to github"
+                imports: https://cnb.cool/puresky/secret-store/-/blob/main/github.yml
+                image: tencentcom/git-sync
+                settings:
+                    target_url: https://github.com/PureSkys/plugin-hitokoto-hub.git
+                    auth_type: https
+                    username: ${GIT_USERNAME}
+                    password: ${GIT_ACCESS_TOKEN}
+              - name: "sync to gitee"
+                imports: https://cnb.cool/puresky/secret-store/-/blob/main/gitee.yml
+                image: tencentcom/git-sync
+                settings:
+                    target_url: https://gitee.com/pureskys/plugin-hitokoto-hub.git
+                    auth_type: https
+                    username: ${GIT_USERNAME}
+                    password: ${GIT_ACCESS_TOKEN}
