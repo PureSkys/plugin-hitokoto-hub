@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import run.halo.app.extension.ListOptions;
+import run.halo.app.extension.ListResult;
+import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
 import run.halo.app.plugin.ApiVersion;
@@ -39,15 +42,19 @@ public class SentencePublicController {
         @RequestParam(name = "categoryName", required = false) String categoryName,
         @Parameter(description = "返回数量，默认8条，最多20条")
         @RequestParam(name = "limit", defaultValue = "8") int limit) {
+
         int actualLimit = Math.min(limit, 20);
 
         ListOptions options;
         if (categoryName != null && !categoryName.isBlank()) {
             options = ListOptions.builder().fieldQuery(
                 Queries.and(Queries.equal("spec.categoryName", categoryName),
-                    Queries.equal("status.isPublished", true))).build();
+                    Queries.equal("status.isPublished", true),
+                    Queries.isNull("metadata.deletionTimestamp"))).build();
         } else {
-            options = ListOptions.builder().build();
+            options = ListOptions.builder().fieldQuery(
+                Queries.and(Queries.equal("status.isPublished", true),
+                    Queries.isNull("metadata.deletionTimestamp"))).build();
         }
 
         // 查询分类的中文名称
@@ -59,20 +66,20 @@ public class SentencePublicController {
             displayNameMono = Mono.just("全部");
         }
 
-        // 并发查询句子和分类名
-        return Mono.zip(client.listAll(Sentence.class, options, Sort.unsorted())
-            .filter(sentence -> sentence.getMetadata().getDeletionTimestamp() == null)
-            .filter(sentence -> sentence.getStatus() != null && sentence.getStatus().isPublished())
-            .collectList(), displayNameMono).map(tuple -> {
+        return client.countBy(Sentence.class, options).filter(total -> total > 0).flatMap(total -> {
+            int totalPages = (int) Math.ceil((double) total / actualLimit);
+            int randomPage = RandomUtils.insecure().randomInt(1, totalPages + 1);
+
+            return client.listBy(Sentence.class, options,
+                    PageRequestImpl.of(randomPage, actualLimit, Sort.unsorted()))
+                .map(ListResult::getItems);
+        }).defaultIfEmpty(Collections.emptyList()).zipWith(displayNameMono).map(tuple -> {
             List<Sentence> sentences = tuple.getT1();
             String displayName = tuple.getT2();
 
-            // 随机打乱
             Collections.shuffle(sentences);
-            List<Sentence> result = sentences.stream().limit(actualLimit).toList();
 
-            // 转换成 SentenceItem
-            List<SentenceItem> items = result.stream().map(s -> {
+            List<SentenceItem> items = sentences.stream().map(s -> {
                 SentenceItem item = new SentenceItem();
                 item.setAuthor(s.getSpec().getAuthor());
                 item.setContent(s.getSpec().getContent());
