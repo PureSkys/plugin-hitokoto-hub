@@ -11,6 +11,6 @@ metadata:
     rbac.authorization.halo.run/display-name: "公共接口"
 rules:
   - apiGroups: [ "api.hitokotohub.puresky.top" ]
-    resources: [ "sentence" ]
-    resourceNames: [ "random" ]
+    resources: [ "sentence" ,"category" ]
+    resourceNames: [ "*" ]
     verbs: [ "get","list" ]
