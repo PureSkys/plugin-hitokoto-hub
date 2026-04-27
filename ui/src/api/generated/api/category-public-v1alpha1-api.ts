@@ -22,21 +22,21 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
-import type { OverviewResponse } from '../models';
+import type { CategoryItem } from '../models';
 /**
- * OverviewV1alpha1Api - axios parameter creator
+ * CategoryPublicV1alpha1Api - axios parameter creator
  * @export
  */
-export const OverviewV1alpha1ApiAxiosParamCreator = function (configuration?: Configuration) {
+export const CategoryPublicV1alpha1ApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary 获取概览信息
+         * @summary 获取所有分类
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getOverview: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/apis/console.api.hitokotohub.puresky.top/v1alpha1/overview`;
+        listCategories: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/apis/public.api.hitokotohub.puresky.top/v1alpha1/category/list`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -71,62 +71,62 @@ export const OverviewV1alpha1ApiAxiosParamCreator = function (configuration?: Co
 };
 
 /**
- * OverviewV1alpha1Api - functional programming interface
+ * CategoryPublicV1alpha1Api - functional programming interface
  * @export
  */
-export const OverviewV1alpha1ApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = OverviewV1alpha1ApiAxiosParamCreator(configuration)
+export const CategoryPublicV1alpha1ApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = CategoryPublicV1alpha1ApiAxiosParamCreator(configuration)
     return {
         /**
          * 
-         * @summary 获取概览信息
+         * @summary 获取所有分类
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getOverview(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<OverviewResponse>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getOverview(options);
+        async listCategories(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CategoryItem>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listCategories(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['OverviewV1alpha1Api.getOverview']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['CategoryPublicV1alpha1Api.listCategories']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
- * OverviewV1alpha1Api - factory interface
+ * CategoryPublicV1alpha1Api - factory interface
  * @export
  */
-export const OverviewV1alpha1ApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = OverviewV1alpha1ApiFp(configuration)
+export const CategoryPublicV1alpha1ApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = CategoryPublicV1alpha1ApiFp(configuration)
     return {
         /**
          * 
-         * @summary 获取概览信息
+         * @summary 获取所有分类
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getOverview(options?: RawAxiosRequestConfig): AxiosPromise<OverviewResponse> {
-            return localVarFp.getOverview(options).then((request) => request(axios, basePath));
+        listCategories(options?: RawAxiosRequestConfig): AxiosPromise<Array<CategoryItem>> {
+            return localVarFp.listCategories(options).then((request) => request(axios, basePath));
         },
     };
 };
 
 /**
- * OverviewV1alpha1Api - object-oriented interface
+ * CategoryPublicV1alpha1Api - object-oriented interface
  * @export
- * @class OverviewV1alpha1Api
+ * @class CategoryPublicV1alpha1Api
  * @extends {BaseAPI}
  */
-export class OverviewV1alpha1Api extends BaseAPI {
+export class CategoryPublicV1alpha1Api extends BaseAPI {
     /**
      * 
-     * @summary 获取概览信息
+     * @summary 获取所有分类
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof OverviewV1alpha1Api
+     * @memberof CategoryPublicV1alpha1Api
      */
-    public getOverview(options?: RawAxiosRequestConfig) {
-        return OverviewV1alpha1ApiFp(this.configuration).getOverview(options).then((request) => request(this.axios, this.basePath));
+    public listCategories(options?: RawAxiosRequestConfig) {
+        return CategoryPublicV1alpha1ApiFp(this.configuration).listCategories(options).then((request) => request(this.axios, this.basePath));
     }
 }
 

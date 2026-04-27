@@ -1,0 +1,1279 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Halo",
+    "version" : "2.23.1"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:52664",
+    "description" : "Generated server url"
+  } ],
+  "security" : [ {
+    "basicAuth" : [ ],
+    "bearerAuth" : [ ]
+  } ],
+  "paths" : {
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/overview" : {
+      "get" : {
+        "operationId" : "getOverview",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OverviewResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "获取概览信息",
+        "tags" : [ "OverviewV1alpha1" ]
+      }
+    },
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/batch" : {
+      "post" : {
+        "operationId" : "batchCreateSentence",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/components/schemas/Sentence"
+                }
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BatchCreateSentenceResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "批量创建句子",
+        "tags" : [ "SentenceV1alpha1" ]
+      }
+    },
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/import-excel" : {
+      "post" : {
+        "operationId" : "importExcelSentences",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExcelImportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BatchCreateSentenceResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "从 Excel 导入句子",
+        "tags" : [ "SentenceV1alpha1" ]
+      }
+    },
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/search" : {
+      "get" : {
+        "operationId" : "searchSentence",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "keyword",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "categoryName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Sentence"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "搜索句子",
+        "tags" : [ "SentenceV1alpha1" ]
+      }
+    },
+    "/apis/hitokotohub.puresky.top/v1alpha1/categories" : {
+      "get" : {
+        "description" : "List Category",
+        "operationId" : "listCategory",
+        "parameters" : [ {
+          "description" : "Page number. Default is 0.",
+          "in" : "query",
+          "name" : "page",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Size number. Default is 0.",
+          "in" : "query",
+          "name" : "size",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Label selector. e.g.: hidden!=true",
+          "in" : "query",
+          "name" : "labelSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Field selector. e.g.: metadata.name==halo",
+          "in" : "query",
+          "name" : "fieldSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryList"
+                }
+              }
+            },
+            "description" : "Response categories"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      },
+      "post" : {
+        "description" : "Create Category",
+        "operationId" : "createCategory",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Category"
+              }
+            }
+          },
+          "description" : "Fresh category"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "Response categories created just now"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      }
+    },
+    "/apis/hitokotohub.puresky.top/v1alpha1/categories/{name}" : {
+      "delete" : {
+        "description" : "Delete Category",
+        "operationId" : "deleteCategory",
+        "parameters" : [ {
+          "description" : "Name of category",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response category deleted just now"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      },
+      "get" : {
+        "description" : "Get Category",
+        "operationId" : "getCategory",
+        "parameters" : [ {
+          "description" : "Name of category",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "Response single category"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      },
+      "patch" : {
+        "description" : "Patch Category",
+        "operationId" : "patchCategory",
+        "parameters" : [ {
+          "description" : "Name of category",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/JsonPatch"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "Response category patched just now"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      },
+      "put" : {
+        "description" : "Update Category",
+        "operationId" : "updateCategory",
+        "parameters" : [ {
+          "description" : "Name of category",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Category"
+              }
+            }
+          },
+          "description" : "Updated category"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Category"
+                }
+              }
+            },
+            "description" : "Response categories updated just now"
+          }
+        },
+        "tags" : [ "CategoryV1alpha1" ]
+      }
+    },
+    "/apis/hitokotohub.puresky.top/v1alpha1/sentences" : {
+      "get" : {
+        "description" : "List Sentence",
+        "operationId" : "listSentence",
+        "parameters" : [ {
+          "description" : "Page number. Default is 0.",
+          "in" : "query",
+          "name" : "page",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Size number. Default is 0.",
+          "in" : "query",
+          "name" : "size",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Label selector. e.g.: hidden!=true",
+          "in" : "query",
+          "name" : "labelSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Field selector. e.g.: metadata.name==halo",
+          "in" : "query",
+          "name" : "fieldSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SentenceList"
+                }
+              }
+            },
+            "description" : "Response sentences"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      },
+      "post" : {
+        "description" : "Create Sentence",
+        "operationId" : "createSentence",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Sentence"
+              }
+            }
+          },
+          "description" : "Fresh sentence"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Sentence"
+                }
+              }
+            },
+            "description" : "Response sentences created just now"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      }
+    },
+    "/apis/hitokotohub.puresky.top/v1alpha1/sentences/{name}" : {
+      "delete" : {
+        "description" : "Delete Sentence",
+        "operationId" : "deleteSentence",
+        "parameters" : [ {
+          "description" : "Name of sentence",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response sentence deleted just now"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      },
+      "get" : {
+        "description" : "Get Sentence",
+        "operationId" : "getSentence",
+        "parameters" : [ {
+          "description" : "Name of sentence",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Sentence"
+                }
+              }
+            },
+            "description" : "Response single sentence"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      },
+      "patch" : {
+        "description" : "Patch Sentence",
+        "operationId" : "patchSentence",
+        "parameters" : [ {
+          "description" : "Name of sentence",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/JsonPatch"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Sentence"
+                }
+              }
+            },
+            "description" : "Response sentence patched just now"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      },
+      "put" : {
+        "description" : "Update Sentence",
+        "operationId" : "updateSentence",
+        "parameters" : [ {
+          "description" : "Name of sentence",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Sentence"
+              }
+            }
+          },
+          "description" : "Updated sentence"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Sentence"
+                }
+              }
+            },
+            "description" : "Response sentences updated just now"
+          }
+        },
+        "tags" : [ "SentenceV1alpha1" ]
+      }
+    },
+    "/apis/public.api.hitokotohub.puresky.top/v1alpha1/category/list" : {
+      "get" : {
+        "operationId" : "listCategories",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoryItem"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "获取所有分类",
+        "tags" : [ "CategoryPublicV1alpha1" ]
+      }
+    },
+    "/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/like" : {
+      "get" : {
+        "operationId" : "toggleLike",
+        "parameters" : [ {
+          "description" : "句子名称",
+          "in" : "query",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "操作类型，like 或 unlike",
+          "in" : "query",
+          "name" : "action",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LikeResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "点赞/取消点赞句子",
+        "tags" : [ "SentencePublicV1alpha1" ]
+      }
+    },
+    "/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random" : {
+      "get" : {
+        "operationId" : "getRandomSentences",
+        "parameters" : [ {
+          "description" : "分类名称，不传则返回所有类型",
+          "in" : "query",
+          "name" : "categoryName",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "返回数量，默认8条，最多20条",
+          "in" : "query",
+          "name" : "limit",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RandomSentenceResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "随机获取句子",
+        "tags" : [ "SentencePublicV1alpha1" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AddOperation" : {
+        "required" : [ "op", "path", "value" ],
+        "type" : "object",
+        "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "add" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          },
+          "value" : {
+            "description" : "Value can be any JSON value"
+          }
+        }
+      },
+      "BatchCreateSentenceResult" : {
+        "type" : "object",
+        "properties" : {
+          "failed" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "success" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Category" : {
+        "required" : [ "apiVersion", "kind", "metadata", "spec" ],
+        "type" : "object",
+        "properties" : {
+          "apiVersion" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/Metadata"
+          },
+          "spec" : {
+            "$ref" : "#/components/schemas/CategorySpec"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/CategoryStatus"
+          }
+        }
+      },
+      "CategoryDistribution" : {
+        "type" : "object",
+        "properties" : {
+          "categoryName" : {
+            "type" : "string",
+            "description" : "分类 metadata name"
+          },
+          "count" : {
+            "type" : "integer",
+            "description" : "句子数量",
+            "format" : "int64"
+          },
+          "displayName" : {
+            "type" : "string",
+            "description" : "分类显示名称"
+          },
+          "notPublishedCount" : {
+            "type" : "integer",
+            "description" : "未公开的句子数量",
+            "format" : "int64"
+          },
+          "publishedCount" : {
+            "type" : "integer",
+            "description" : "公开的句子数量",
+            "format" : "int64"
+          }
+        },
+        "description" : "各分类句子数量分布"
+      },
+      "CategoryItem" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "description" : "分类描述"
+          },
+          "displayName" : {
+            "type" : "string",
+            "description" : "分类显示名称"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "分类标识"
+          },
+          "sentenceCount" : {
+            "type" : "integer",
+            "description" : "句子数量",
+            "format" : "int64"
+          }
+        }
+      },
+      "CategoryList" : {
+        "required" : [ "first", "hasNext", "hasPrevious", "items", "last", "page", "size", "total", "totalPages" ],
+        "type" : "object",
+        "properties" : {
+          "first" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the first page."
+          },
+          "hasNext" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "hasPrevious" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "A chunk of items.",
+            "items" : {
+              "$ref" : "#/components/schemas/Category"
+            }
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the last page."
+          },
+          "page" : {
+            "type" : "integer",
+            "description" : "Page number, starts from 1. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "description" : "Size of each page. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "description" : "Total elements.",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "description" : "Indicates total pages.",
+            "format" : "int64"
+          }
+        }
+      },
+      "CategorySpec" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "maxLength" : 200,
+            "type" : "string",
+            "description" : "分类描述"
+          },
+          "name" : {
+            "maxLength" : 50,
+            "type" : "string",
+            "description" : "分类名称"
+          }
+        }
+      },
+      "CategoryStatus" : {
+        "type" : "object",
+        "properties" : {
+          "sentenceCount" : {
+            "type" : "integer",
+            "description" : "句子数量",
+            "format" : "int64",
+            "default" : 0
+          }
+        }
+      },
+      "CopyOperation" : {
+        "required" : [ "op", "from", "path" ],
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          },
+          "op" : {
+            "type" : "string",
+            "enum" : [ "copy" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          }
+        }
+      },
+      "ExcelImportRequest" : {
+        "required" : [ "categoryName", "file" ],
+        "type" : "object",
+        "properties" : {
+          "authorField" : {
+            "type" : "string",
+            "description" : "作者列名"
+          },
+          "categoryName" : {
+            "type" : "string",
+            "description" : "目标分类 metadata.name"
+          },
+          "contentField" : {
+            "type" : "string",
+            "description" : "句子内容列名"
+          },
+          "file" : {
+            "type" : "string",
+            "description" : "xlsx 文件",
+            "format" : "binary"
+          },
+          "sourceField" : {
+            "type" : "string",
+            "description" : "来源列名"
+          }
+        }
+      },
+      "JsonPatch" : {
+        "minItems" : 1,
+        "uniqueItems" : true,
+        "type" : "array",
+        "description" : "JSON schema for JSONPatch operations",
+        "items" : {
+          "oneOf" : [ {
+            "$ref" : "#/components/schemas/AddOperation"
+          }, {
+            "$ref" : "#/components/schemas/ReplaceOperation"
+          }, {
+            "$ref" : "#/components/schemas/TestOperation"
+          }, {
+            "$ref" : "#/components/schemas/RemoveOperation"
+          }, {
+            "$ref" : "#/components/schemas/MoveOperation"
+          }, {
+            "$ref" : "#/components/schemas/CopyOperation"
+          } ]
+        }
+      },
+      "LikeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "状态码：ok / rate_limited / not_found"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "提示信息"
+          },
+          "sentence" : {
+            "$ref" : "#/components/schemas/SentenceItem"
+          },
+          "success" : {
+            "type" : "boolean",
+            "description" : "是否成功"
+          }
+        }
+      },
+      "Metadata" : {
+        "required" : [ "name" ],
+        "type" : "object",
+        "properties" : {
+          "annotations" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Annotations are like key-value format."
+          },
+          "creationTimestamp" : {
+            "type" : "string",
+            "description" : "Creation timestamp of the Extension.",
+            "format" : "date-time",
+            "nullable" : true
+          },
+          "deletionTimestamp" : {
+            "type" : "string",
+            "description" : "Deletion timestamp of the Extension.",
+            "format" : "date-time",
+            "nullable" : true
+          },
+          "finalizers" : {
+            "uniqueItems" : true,
+            "type" : "array",
+            "nullable" : true,
+            "items" : {
+              "type" : "string",
+              "nullable" : true
+            }
+          },
+          "generateName" : {
+            "type" : "string",
+            "description" : "The name field will be generated automatically according to the given generateName field"
+          },
+          "labels" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Labels are like key-value format."
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Metadata name"
+          },
+          "version" : {
+            "type" : "integer",
+            "description" : "Current version of the Extension. It will be bumped up every update.",
+            "format" : "int64",
+            "nullable" : true
+          }
+        },
+        "description" : "Metadata of Extension."
+      },
+      "MoveOperation" : {
+        "required" : [ "op", "from", "path" ],
+        "type" : "object",
+        "properties" : {
+          "from" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          },
+          "op" : {
+            "type" : "string",
+            "enum" : [ "move" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          }
+        }
+      },
+      "OverviewResponse" : {
+        "type" : "object",
+        "properties" : {
+          "categoryCount" : {
+            "type" : "integer",
+            "description" : "分类总数",
+            "format" : "int64"
+          },
+          "categoryDistribution" : {
+            "type" : "array",
+            "description" : "各分类句子数量分布",
+            "items" : {
+              "$ref" : "#/components/schemas/CategoryDistribution"
+            }
+          },
+          "notPublishedSentenceCount" : {
+            "type" : "integer",
+            "description" : "未发布句子数",
+            "format" : "int64"
+          },
+          "publishedSentenceCount" : {
+            "type" : "integer",
+            "description" : "已发布句子数",
+            "format" : "int64"
+          },
+          "sentenceCount" : {
+            "type" : "integer",
+            "description" : "句子总数",
+            "format" : "int64"
+          }
+        }
+      },
+      "RandomSentenceResponse" : {
+        "type" : "object",
+        "properties" : {
+          "categoryName" : {
+            "type" : "string",
+            "description" : "请求的分类名称"
+          },
+          "requested" : {
+            "type" : "integer",
+            "description" : "请求数量",
+            "format" : "int64"
+          },
+          "returned" : {
+            "type" : "integer",
+            "description" : "实际返回数量",
+            "format" : "int64"
+          },
+          "sentences" : {
+            "type" : "array",
+            "description" : "句子列表",
+            "items" : {
+              "$ref" : "#/components/schemas/SentenceItem"
+            }
+          }
+        }
+      },
+      "RemoveOperation" : {
+        "required" : [ "op", "path" ],
+        "type" : "object",
+        "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "remove" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          }
+        }
+      },
+      "ReplaceOperation" : {
+        "required" : [ "op", "path", "value" ],
+        "type" : "object",
+        "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "replace" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          },
+          "value" : {
+            "description" : "Value can be any JSON value"
+          }
+        }
+      },
+      "Sentence" : {
+        "required" : [ "apiVersion", "kind", "metadata", "spec" ],
+        "type" : "object",
+        "properties" : {
+          "apiVersion" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/Metadata"
+          },
+          "spec" : {
+            "$ref" : "#/components/schemas/SentenceSpec"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/SentenceStatus"
+          }
+        }
+      },
+      "SentenceItem" : {
+        "type" : "object",
+        "properties" : {
+          "author" : {
+            "type" : "string",
+            "description" : "作者"
+          },
+          "content" : {
+            "type" : "string",
+            "description" : "内容"
+          },
+          "createdBy" : {
+            "type" : "string",
+            "description" : "创建者"
+          },
+          "likeCount" : {
+            "type" : "integer",
+            "description" : "点赞数",
+            "format" : "int64"
+          },
+          "source" : {
+            "type" : "string",
+            "description" : "来源"
+          },
+          "viewCount" : {
+            "type" : "integer",
+            "description" : "浏览数",
+            "format" : "int64"
+          }
+        },
+        "description" : "句子列表"
+      },
+      "SentenceList" : {
+        "required" : [ "first", "hasNext", "hasPrevious", "items", "last", "page", "size", "total", "totalPages" ],
+        "type" : "object",
+        "properties" : {
+          "first" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the first page."
+          },
+          "hasNext" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "hasPrevious" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "A chunk of items.",
+            "items" : {
+              "$ref" : "#/components/schemas/Sentence"
+            }
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the last page."
+          },
+          "page" : {
+            "type" : "integer",
+            "description" : "Page number, starts from 1. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "description" : "Size of each page. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "description" : "Total elements.",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "description" : "Indicates total pages.",
+            "format" : "int64"
+          }
+        }
+      },
+      "SentenceSpec" : {
+        "required" : [ "categoryName", "content" ],
+        "type" : "object",
+        "properties" : {
+          "author" : {
+            "maxLength" : 50,
+            "type" : "string",
+            "description" : "作者",
+            "default" : "匿名"
+          },
+          "categoryName" : {
+            "type" : "string",
+            "description" : "分类名称"
+          },
+          "content" : {
+            "maxLength" : 500,
+            "type" : "string",
+            "description" : "句子内容"
+          },
+          "createdBy" : {
+            "type" : "string",
+            "description" : "创建用户"
+          },
+          "source" : {
+            "maxLength" : 100,
+            "type" : "string",
+            "description" : "来源",
+            "default" : "未知"
+          }
+        }
+      },
+      "SentenceStatus" : {
+        "type" : "object",
+        "properties" : {
+          "likeCount" : {
+            "type" : "integer",
+            "description" : "点赞数",
+            "format" : "int64",
+            "default" : 0
+          },
+          "published" : {
+            "type" : "boolean"
+          },
+          "viewCount" : {
+            "type" : "integer",
+            "description" : "浏览量",
+            "format" : "int64",
+            "default" : 0
+          }
+        }
+      },
+      "TestOperation" : {
+        "required" : [ "op", "path", "value" ],
+        "type" : "object",
+        "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "test" ]
+          },
+          "path" : {
+            "pattern" : "^(/[^/~]*(~[01][^/~]*)*)*$",
+            "type" : "string",
+            "description" : "A JSON Pointer path pointing to the location to move/copy from.",
+            "example" : "/a/b/c"
+          },
+          "value" : {
+            "description" : "Value can be any JSON value"
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "basicAuth" : {
+        "scheme" : "basic",
+        "type" : "http"
+      },
+      "bearerAuth" : {
+        "bearerFormat" : "JWT",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  }
+}

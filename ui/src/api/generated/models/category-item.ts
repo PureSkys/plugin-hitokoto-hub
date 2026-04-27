@@ -17,26 +17,32 @@
 /**
  * 
  * @export
- * @interface BatchCreateSentenceResult
+ * @interface CategoryItem
  */
-export interface BatchCreateSentenceResult {
+export interface CategoryItem {
     /**
-     * 
-     * @type {number}
-     * @memberof BatchCreateSentenceResult
+     * 分类描述
+     * @type {string}
+     * @memberof CategoryItem
      */
-    'failed'?: number;
+    'description'?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof BatchCreateSentenceResult
+     * 分类显示名称
+     * @type {string}
+     * @memberof CategoryItem
      */
-    'success'?: number;
+    'displayName'?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof BatchCreateSentenceResult
+     * 分类标识
+     * @type {string}
+     * @memberof CategoryItem
      */
-    'total'?: number;
+    'name'?: string;
+    /**
+     * 句子数量
+     * @type {number}
+     * @memberof CategoryItem
+     */
+    'sentenceCount'?: number;
 }
 

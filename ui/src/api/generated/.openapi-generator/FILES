@@ -2,6 +2,7 @@
 .npmignore
 .openapi-generator-ignore
 api.ts
+api/category-public-v1alpha1-api.ts
 api/category-v1alpha1-api.ts
 api/overview-v1alpha1-api.ts
 api/sentence-public-v1alpha1-api.ts
@@ -14,6 +15,7 @@ index.ts
 models/add-operation.ts
 models/batch-create-sentence-result.ts
 models/category-distribution.ts
+models/category-item.ts
 models/category-list.ts
 models/category-spec.ts
 models/category-status.ts
@@ -21,6 +23,7 @@ models/category.ts
 models/copy-operation.ts
 models/index.ts
 models/json-patch-inner.ts
+models/like-response.ts
 models/metadata.ts
 models/move-operation.ts
 models/overview-response.ts

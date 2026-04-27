@@ -1,6 +1,6 @@
-import {definePlugin} from '@halo-dev/ui-shared'
-import {IconPlug} from '@halo-dev/components'
-import {markRaw} from 'vue'
+import { definePlugin } from '@halo-dev/ui-shared'
+import { IconPlug } from '@halo-dev/components'
+import { markRaw } from 'vue'
 
 export default definePlugin({
   components: {},
@@ -14,6 +14,7 @@ export default definePlugin({
         meta: {
           title: '一言管理',
           searchable: true,
+          permissions: ['plugin:hitokoto-hub:view'],
           menu: {
             name: '一言管理',
             icon: markRaw(IconPlug),

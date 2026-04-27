@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation platform('run.halo.tools.platform:plugin:2.23.0')
+    implementation 'org.dhatim:fastexcel-reader:0.20.0'
     compileOnly 'run.halo.app:api'
 
     testImplementation 'run.halo.app:api'
@@ -56,7 +57,7 @@ halo {
 
 haloPlugin {
     openApi {
-        // outputDir = file("$rootDir/api-docs/openapi/v3_0") // 指定 OpenAPI 文档的输出目录默认输出到 build 目录下，不建议修改，除非需要提交到代码仓库
+        outputDir = file("$rootDir/api-docs/openapi/v3_0")
         groupingRules {
             // 定义 API 分组规则，用于为插件项目中的 APIs 分组然后只对此分组生成 API 客户端代码
             // 定义了一个名为 extensionApis 的分组，task 会通过 /v3/api-docs/extensionApis 访问到 api docs 然后生成 API 客户端代码
@@ -67,7 +68,7 @@ haloPlugin {
                 // 分组的 API 规则用于匹配插件项目中的 API 将其划分到此分组，它是一个 Ant 风格的路径匹配规则可以写多个
                 pathsToMatch = ['/apis/hitokotohub.puresky.top/v1alpha1/**',
                                 '/apis/console.api.hitokotohub.puresky.top/v1alpha1/**',
-                                '/apis/api.hitokotohub.puresky.top/v1alpha1/**']
+                                '/apis/public.api.hitokotohub.puresky.top/v1alpha1/**']
             }
         }
         groupedApiMappings = [
@@ -80,4 +81,3 @@ haloPlugin {
         }
     }
 }
-

@@ -1,35 +1,52 @@
-package top.puresky.hitokotohub.controller;
+package top.puresky.hitokotohub.endpoint;
 
-import io.swagger.v3.oas.annotations.Operation;
+import static org.springdoc.core.fn.builders.apiresponse.Builder.responseBuilder;
+import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import run.halo.app.core.extension.endpoint.CustomEndpoint;
+import run.halo.app.extension.GroupVersion;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
 import run.halo.app.extension.router.selector.FieldSelector;
-import run.halo.app.plugin.ApiVersion;
 import top.puresky.hitokotohub.extension.Category;
 
-@RestController
+@Component
 @RequiredArgsConstructor
-@ApiVersion("api.hitokotohub.puresky.top/v1alpha1")
-@RequestMapping("/category")
-@Tag(name = "CategoryPublicV1alpha1")
-public class CategoryPublicController {
+public class CategoryPublicEndpoint implements CustomEndpoint {
+
+    private static final String TAG = "CategoryPublicV1alpha1";
+    private static final String GROUP_VERSION = "public.api.hitokotohub.puresky.top/v1alpha1";
 
     private final ReactiveExtensionClient client;
 
-    @GetMapping("/list")
-    @Operation(summary = "获取所有分类")
-    public Mono<List<CategoryItem>> listCategories() {
+    @Override
+    public RouterFunction<ServerResponse> endpoint() {
+        return route()
+            .GET("category/list", this::listCategories, builder -> builder
+                .operationId("listCategories")
+                .summary("获取所有分类")
+                .tag(TAG)
+                .response(responseBuilder()
+                    .implementationArray(CategoryItem.class)))
+            .build();
+    }
+
+    @Override
+    public GroupVersion groupVersion() {
+        return GroupVersion.parseAPIVersion(GROUP_VERSION);
+    }
+
+    private Mono<ServerResponse> listCategories(ServerRequest request) {
         var listOptions = new ListOptions();
         listOptions.setFieldSelector(
             FieldSelector.of(Queries.isNull("metadata.deletionTimestamp")));
@@ -43,7 +60,8 @@ public class CategoryPublicController {
                 item.setSentenceCount(
                     category.getStatus() != null ? category.getStatus().getSentenceCount() : 0);
                 return item;
-            }).toList());
+            }).toList())
+            .flatMap(items -> ServerResponse.ok().bodyValue(items));
     }
 
     @Data

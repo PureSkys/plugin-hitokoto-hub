@@ -1,9 +1,11 @@
-package top.puresky.hitokotohub.controller;
+package top.puresky.hitokotohub.endpoint;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import static org.springdoc.core.fn.builders.apiresponse.Builder.responseBuilder;
+import static org.springdoc.core.fn.builders.parameter.Builder.parameterBuilder;
+import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
+
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -15,41 +17,83 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+import run.halo.app.core.extension.endpoint.CustomEndpoint;
+import run.halo.app.extension.GroupVersion;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ListResult;
 import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
-import run.halo.app.plugin.ApiVersion;
 import top.puresky.hitokotohub.extension.Category;
 import top.puresky.hitokotohub.extension.Sentence;
 
-@Slf4j
-@ApiVersion("api.hitokotohub.puresky.top/v1alpha1")
-@RequestMapping("/sentence")
-@RestController
+@Component
 @RequiredArgsConstructor
-@Tag(name = "SentencePublicV1alpha1")
-public class SentencePublicController {
+@Slf4j
+public class SentencePublicEndpoint implements CustomEndpoint {
 
-    private final ReactiveExtensionClient client;
-
-    private final Map<String, Long> likeCache = new ConcurrentHashMap<>();
+    private static final String TAG = "SentencePublicV1alpha1";
+    private static final String GROUP_VERSION = "public.api.hitokotohub.puresky.top/v1alpha1";
     private static final long LIKE_COOLDOWN = Duration.ofHours(12).toMillis();
 
-    @GetMapping("/random")
-    @Operation(summary = "随机获取句子")
-    public Mono<RandomSentenceResponse> getRandomSentences(
-        @Parameter(description = "分类名称，不传则返回所有类型")
-        @RequestParam(name = "categoryName", required = false) String categoryName,
-        @Parameter(description = "返回数量，默认8条，最多20条")
-        @RequestParam(name = "limit", defaultValue = "8") int limit) {
+    private final ReactiveExtensionClient client;
+    private final Map<String, Long> likeCache = new ConcurrentHashMap<>();
 
+    @Override
+    public RouterFunction<ServerResponse> endpoint() {
+        return route()
+            .GET("sentence/random", this::getRandomSentences, builder -> builder
+                .operationId("getRandomSentences")
+                .summary("随机获取句子")
+                .tag(TAG)
+                .parameter(parameterBuilder()
+                    .in(ParameterIn.QUERY)
+                    .name("categoryName")
+                    .description("分类名称，不传则返回所有类型")
+                    .implementation(String.class)
+                    .required(false))
+                .parameter(parameterBuilder()
+                    .in(ParameterIn.QUERY)
+                    .name("limit")
+                    .description("返回数量，默认8条，最多20条")
+                    .implementation(Integer.class)
+                    .required(false))
+                .response(responseBuilder()
+                    .implementation(RandomSentenceResponse.class)))
+            .GET("sentence/like", this::toggleLike, builder -> builder
+                .operationId("toggleLike")
+                .summary("点赞/取消点赞句子")
+                .tag(TAG)
+                .parameter(parameterBuilder()
+                    .in(ParameterIn.QUERY)
+                    .name("name")
+                    .description("句子名称")
+                    .implementation(String.class)
+                    .required(true))
+                .parameter(parameterBuilder()
+                    .in(ParameterIn.QUERY)
+                    .name("action")
+                    .description("操作类型，like 或 unlike")
+                    .implementation(String.class)
+                    .required(false))
+                .response(responseBuilder()
+                    .implementation(LikeResponse.class)))
+            .build();
+    }
+
+    @Override
+    public GroupVersion groupVersion() {
+        return GroupVersion.parseAPIVersion(GROUP_VERSION);
+    }
+
+    private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
+        String categoryName = request.queryParam("categoryName").orElse(null);
+        int limit = request.queryParam("limit").map(Integer::parseInt).orElse(8);
         int actualLimit = Math.min(limit, 20);
 
         ListOptions options;
@@ -85,16 +129,7 @@ public class SentencePublicController {
 
             Collections.shuffle(sentences);
 
-            List<SentenceItem> items = sentences.stream().map(s -> {
-                SentenceItem item = new SentenceItem();
-                item.setAuthor(s.getSpec().getAuthor());
-                item.setContent(s.getSpec().getContent());
-                item.setSource(s.getSpec().getSource());
-                item.setCreatedBy(s.getSpec().getCreatedBy());
-                item.setLikeCount(s.getStatus() != null ? s.getStatus().getLikeCount() : 0);
-                item.setViewCount(s.getStatus() != null ? s.getStatus().getViewCount() : 0);
-                return item;
-            }).toList();
+            List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
 
             RandomSentenceResponse response = new RandomSentenceResponse();
             response.setCategoryName(displayName);
@@ -102,26 +137,17 @@ public class SentencePublicController {
             response.setReturned(items.size());
             response.setSentences(items);
             return response;
-        });
+        }).flatMap(response -> ServerResponse.ok().bodyValue(response));
     }
 
-    @GetMapping("/like")
-    @Operation(summary = "点赞/取消点赞句子")
-    public Mono<LikeResponse> toggleLike(
-        @RequestParam(name = "name")
-        @Parameter(description = "句子名称")
-        String name,
-        @Parameter(description = "操作类型，like 或 unlike")
-        @RequestParam(name = "action", defaultValue = "like")
-        String action,
-        ServerHttpRequest request) {
-
-        String ip = getClientIp(request);
+    private Mono<ServerResponse> toggleLike(ServerRequest request) {
+        String name = request.queryParam("name").orElse("");
+        String action = request.queryParam("action").orElse("like");
+        String ip = getClientIp(request.exchange().getRequest());
         String likeKey = ip + ":like:" + name;
         String unlikeKey = ip + ":unlike:" + name;
         boolean isUnlike = "unlike".equals(action);
 
-        // 检查冷却
         String checkKey = isUnlike ? unlikeKey : likeKey;
         Long lastTime = likeCache.get(checkKey);
         long now = System.currentTimeMillis();
@@ -130,12 +156,13 @@ public class SentencePublicController {
             long remainingSeconds = 12 * 60 * 60 - ((now - lastTime) / 1000);
             return client.get(Sentence.class, name)
                 .map(sentence -> buildLikeResponse(sentence, false,
-                    "请在 " + formatRemainingTime(remainingSeconds) + " 后再" + (isUnlike ? "取消点赞" : "点赞"),
+                    "请在 " + formatRemainingTime(remainingSeconds) + " 后再"
+                        + (isUnlike ? "取消点赞" : "点赞"),
                     "rate_limited"))
-                .defaultIfEmpty(buildErrorResponse());
+                .defaultIfEmpty(buildErrorResponse())
+                .flatMap(response -> ServerResponse.ok().bodyValue(response));
         }
 
-        // 执行操作
         String oppositeKey = isUnlike ? likeKey : unlikeKey;
 
         return client.get(Sentence.class, name)
@@ -159,7 +186,8 @@ public class SentencePublicController {
                         isUnlike ? "取消点赞成功" : "点赞成功", "ok");
                 });
             })
-            .defaultIfEmpty(buildErrorResponse());
+            .defaultIfEmpty(buildErrorResponse())
+            .flatMap(response -> ServerResponse.ok().bodyValue(response));
     }
 
     private LikeResponse buildLikeResponse(Sentence sentence, boolean success, String message,
@@ -193,8 +221,12 @@ public class SentencePublicController {
     }
 
     private String formatRemainingTime(long seconds) {
-        if (seconds < 60) return seconds + " 秒";
-        if (seconds < 3600) return (seconds / 60) + " 分钟";
+        if (seconds < 60) {
+            return seconds + " 秒";
+        }
+        if (seconds < 3600) {
+            return (seconds / 60) + " 分钟";
+        }
         return (seconds / 3600) + " 小时";
     }
 
@@ -209,6 +241,7 @@ public class SentencePublicController {
     }
 
     @Data
+    @Schema(name = "RandomSentenceResponse")
     public static class RandomSentenceResponse {
         @Schema(description = "请求的分类名称")
         private String categoryName;
@@ -221,6 +254,7 @@ public class SentencePublicController {
     }
 
     @Data
+    @Schema(name = "SentenceItem")
     public static class SentenceItem {
         @Schema(description = "作者")
         private String author;
@@ -237,6 +271,7 @@ public class SentencePublicController {
     }
 
     @Data
+    @Schema(name = "LikeResponse")
     public static class LikeResponse {
         @Schema(description = "是否成功")
         private boolean success;

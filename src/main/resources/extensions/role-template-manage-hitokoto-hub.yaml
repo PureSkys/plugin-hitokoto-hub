@@ -1,0 +1,20 @@
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: hitokoto-hub-role-template-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Hitokoto Hub"
+    rbac.authorization.halo.run/display-name: "一言管理"
+    rbac.authorization.halo.run/dependencies: |
+      ["hitokoto-hub-role-template-view"]
+    rbac.authorization.halo.run/ui-permissions: |
+      ["plugin:hitokoto-hub:manage"]
+rules:
+  - apiGroups: [ "hitokotohub.puresky.top" ]
+    resources: [ "sentences", "categories" ]
+    verbs: [ "create", "delete", "deletecollection", "get", "list", "patch", "update", "watch" ]
+  - apiGroups: [ "console.api.hitokotohub.puresky.top" ]
+    resources: [ "sentence" ]
+    verbs: [ "create", "get", "list" ]

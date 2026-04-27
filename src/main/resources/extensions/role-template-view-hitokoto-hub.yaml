@@ -1,0 +1,18 @@
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: hitokoto-hub-role-template-view
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "Hitokoto Hub"
+    rbac.authorization.halo.run/display-name: "一言查看"
+    rbac.authorization.halo.run/ui-permissions: |
+      ["plugin:hitokoto-hub:view"]
+rules:
+  - apiGroups: [ "hitokotohub.puresky.top" ]
+    resources: [ "sentences", "categories" ]
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "console.api.hitokotohub.puresky.top" ]
+    resources: [ "overview", "sentence" ]
+    verbs: [ "get", "list" ]

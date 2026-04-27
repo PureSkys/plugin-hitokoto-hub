@@ -20,32 +20,32 @@ import type { SentenceItem } from './sentence-item';
 /**
  * 
  * @export
- * @interface RandomSentenceResponse
+ * @interface LikeResponse
  */
-export interface RandomSentenceResponse {
+export interface LikeResponse {
     /**
-     * 请求的分类名称
+     * 状态码：ok / rate_limited / not_found
      * @type {string}
-     * @memberof RandomSentenceResponse
+     * @memberof LikeResponse
      */
-    'categoryName'?: string;
+    'code'?: string;
     /**
-     * 请求数量
-     * @type {number}
-     * @memberof RandomSentenceResponse
+     * 提示信息
+     * @type {string}
+     * @memberof LikeResponse
      */
-    'requested'?: number;
+    'message'?: string;
     /**
-     * 实际返回数量
-     * @type {number}
-     * @memberof RandomSentenceResponse
+     * 
+     * @type {SentenceItem}
+     * @memberof LikeResponse
      */
-    'returned'?: number;
+    'sentence'?: SentenceItem;
     /**
-     * 句子列表
-     * @type {Array<SentenceItem>}
-     * @memberof RandomSentenceResponse
+     * 是否成功
+     * @type {boolean}
+     * @memberof LikeResponse
      */
-    'sentences'?: Array<SentenceItem>;
+    'success'?: boolean;
 }
 
