@@ -10,11 +10,17 @@
             </div>
           </div>
           <div v-if="canManage" class="flex shrink-0 flex-row items-center gap-2">
-            <VButton size="sm" @click="handleBatchImport">
+            <VButton size="sm" @click="handleBatchImport('json')">
               <template #icon>
                 <IconUpload class="h-full w-full" />
               </template>
-              批量导入
+              JSON 导入
+            </VButton>
+            <VButton size="sm" @click="handleBatchImport('excel')">
+              <template #icon>
+                <IconUpload class="h-full w-full" />
+              </template>
+              Excel 导入
             </VButton>
             <VButton size="sm" type="secondary" @click="handleCreate">
               <template #icon>
@@ -840,7 +846,7 @@ const handleCreate = () => {
   showFormModal.value = true
 }
 
-const handleBatchImport = async () => {
+const handleBatchImport = async (mode: 'json' | 'excel' = 'json') => {
   await initCategories()
   batchImportForm.value = {
     jsonText: '',
@@ -849,7 +855,7 @@ const handleBatchImport = async () => {
     authorField: '',
     sourceField: '',
   }
-  batchImportMode.value = 'json'
+  batchImportMode.value = mode
   batchImportExcelFile.value = null
   batchImportExcelForm.value = {
     contentField: '',
