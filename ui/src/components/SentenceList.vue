@@ -59,31 +59,32 @@
               </button>
             </div>
           </div>
-
-          <div class="category-nav">
-            <button
-                    :class="{ 'category-nav__item--active': !selectedCategory }"
-                    class="category-nav__item"
-                    type="button"
-                    @click="handleCategorySelect(undefined)"
-            >
+          <!--          分类区块-->
+          <el-scrollbar max-height="606px">
+            <div class="category-nav">
+              <button
+                      :class="{ 'category-nav__item--active': !selectedCategory }"
+                      class="category-nav__item"
+                      type="button"
+                      @click="handleCategorySelect(undefined)"
+              >
               <span class="category-nav__text">
                 <span class="category-nav__name">全部分类</span>
                 <span class="category-nav__count">{{ totalCategorySentenceCount }} 条句子</span>
               </span>
-            </button>
-            <div
-                    v-for="category in categories"
-                    :key="category.metadata.name"
-                    :class="{ 'category-nav__item--active': selectedCategory === category.metadata.name }"
-                    class="category-nav__item category-nav__item--editable"
-                    role="button"
-                    tabindex="0"
-                    @click="!isDeletingCategory(category) && handleCategorySelect(category.metadata.name)"
-                    @keydown.enter="
+              </button>
+              <div
+                      v-for="category in categories"
+                      :key="category.metadata.name"
+                      :class="{ 'category-nav__item--active': selectedCategory === category.metadata.name }"
+                      class="category-nav__item category-nav__item--editable"
+                      role="button"
+                      tabindex="0"
+                      @click="!isDeletingCategory(category) && handleCategorySelect(category.metadata.name)"
+                      @keydown.enter="
                 !isDeletingCategory(category) && handleCategorySelect(category.metadata.name)
               "
-            >
+              >
               <span class="category-nav__text">
                 <span class="category-nav__name">{{ category.spec.name }}</span>
                 <span class="category-nav__count">{{
@@ -92,7 +93,7 @@
                             : `${category.status?.sentenceCount ?? 0} 条句子`
                   }}</span>
               </span>
-              <span v-if="!isDeletingCategory(category) && canManage" class="category-nav__actions">
+                <span v-if="!isDeletingCategory(category) && canManage" class="category-nav__actions">
                 <button
                         v-tooltip="'编辑分类'"
                         class="category-nav__action"
@@ -110,8 +111,10 @@
                   <Delete class="h-3.5 w-3.5"/>
                 </button>
               </span>
+              </div>
             </div>
-          </div>
+          </el-scrollbar>
+
         </aside>
 
         <section class="sentence-list-pane">
@@ -141,83 +144,84 @@
             </div>
           </div>
 
-          <div v-if="loading" class="flex items-center justify-center py-20">
-            <VLoading/>
-          </div>
-
-          <VEmpty
-                  v-else-if="sentences.length === 0"
-                  title="暂无句子"
-                  message="点击「新建句子」创建你的第一条句子"
-          />
-
-          <VEntityContainer v-else>
-            <VEntity v-for="sentence in sentences" :key="sentence.metadata.name">
-              <template #start>
-                <VEntityField max-width="640px">
-                  <template #title>
+          <div>
+            <div v-if="loading" class="flex items-center justify-center py-20">
+              <VLoading/>
+            </div>
+            <VEmpty
+                    v-else-if="sentences.length === 0"
+                    title="暂无句子"
+                    message="点击「新建句子」创建你的第一条句子"
+            />
+            <!--句子列表-->
+            <el-scrollbar v-else max-height="550px">
+              <VEntityContainer>
+                <VEntity v-for="sentence in sentences" :key="sentence.metadata.name">
+                  <template #start>
+                    <VEntityField max-width="640px">
+                      <template #title>
                     <span class="whitespace-normal break-words text-sm font-medium text-gray-900">
                       {{ sentence.spec.content }}
                     </span>
+                      </template>
+                      <template #description>
+                        <div class="flex items-center gap-1 text-gray-500">
+                          <VTag>作者：{{ sentence.spec.author || '匿名' }}</VTag>
+                          <VTag>来源：{{ sentence.spec.source || '未知' }}</VTag>
+                          <VTag>分类：{{ getCategoryName(sentence.spec.categoryName) }}</VTag>
+                        </div>
+                      </template>
+                    </VEntityField>
                   </template>
-                  <template #description>
-                    <div
-                            class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500"
+                  <template #end>
+                    <VEntityField>
+                      <template #description>
+                        <VStatusDot v-if="isDeleting(sentence)" animate state="error"
+                                    text="删除中"/>
+                        <VStatusDot
+                                v-else
+                                :state="sentence.status?.published ? 'success' : 'default'"
+                                :text="sentence.status?.published ? '已发布' : '未发布'"
+                        />
+                      </template>
+                    </VEntityField>
+                    <VEntityField>
+                      <template #description>
+                        <div class="flex items-center gap-1 text-gray-500">
+                          <el-icon :size="14">
+                            <StarFilled/>
+                          </el-icon>
+                          <span :title="'点赞'" class="text-sm">{{
+                              sentence.status?.likeCount ?? 0
+                            }}</span>
+                        </div>
+                      </template>
+                    </VEntityField>
+                    <VEntityField>
+                      <template #description>
+                        <div class="flex items-center gap-1 text-gray-500">
+                          <el-icon :size="14">
+                            <View/>
+                          </el-icon>
+                          <span class="text-sm">{{ sentence.status?.viewCount ?? 0 }}</span>
+                        </div>
+                      </template>
+                    </VEntityField>
+                  </template>
+                  <template v-if="canManage" #dropdownItems>
+                    <VDropdownItem @click="handleEdit(sentence)">编辑</VDropdownItem>
+                    <VDropdownItem
+                            v-if="!isDeleting(sentence)"
+                            type="danger"
+                            @click="handleDelete(sentence)"
                     >
-                      <span>作者：{{ sentence.spec.author || '匿名' }}</span>
-                      <span>来源：{{ sentence.spec.source || '未知' }}</span>
-                      <span>分类：{{ getCategoryName(sentence.spec.categoryName) }}</span>
-                    </div>
+                      删除
+                    </VDropdownItem>
                   </template>
-                </VEntityField>
-              </template>
-              <template #end>
-                <VEntityField>
-                  <template #description>
-                    <VStatusDot v-if="isDeleting(sentence)" animate state="error" text="删除中"/>
-                    <VStatusDot
-                            v-else
-                            :state="sentence.status?.published ? 'success' : 'default'"
-                            :text="sentence.status?.published ? '已发布' : '未发布'"
-                    />
-                  </template>
-                </VEntityField>
-                <VEntityField>
-                  <template #description>
-                    <div class="flex items-center gap-1 text-gray-500">
-                      <el-icon :size="14">
-                        <StarFilled/>
-                      </el-icon>
-                      <span :title="'点赞'" class="text-sm">{{
-                          sentence.status?.likeCount ?? 0
-                        }}</span>
-                    </div>
-                  </template>
-                </VEntityField>
-                <VEntityField>
-                  <template #description>
-                    <div class="flex items-center gap-1 text-gray-500">
-                      <el-icon :size="14">
-                        <View/>
-                      </el-icon>
-                      <span class="text-sm">{{ sentence.status?.viewCount ?? 0 }}</span>
-                    </div>
-                  </template>
-                </VEntityField>
-              </template>
-              <template v-if="canManage" #dropdownItems>
-                <VDropdownItem @click="handleEdit(sentence)">编辑</VDropdownItem>
-                <VDropdownItem
-                        v-if="!isDeleting(sentence)"
-                        type="danger"
-                        @click="handleDelete(sentence)"
-                >
-                  删除
-                </VDropdownItem>
-              </template>
-            </VEntity>
-          </VEntityContainer>
-
+                </VEntity>
+              </VEntityContainer>
+            </el-scrollbar>
+          </div>
           <div class="sentence-list-pagination">
             <VPagination
                     v-model:page="page"
@@ -586,6 +590,7 @@ import {
   VModal,
   VPagination,
   VStatusDot,
+  VTag,
 } from '@halo-dev/components'
 import {utils} from '@halo-dev/ui-shared'
 import {Delete, EditPen, StarFilled, View} from '@element-plus/icons-vue'

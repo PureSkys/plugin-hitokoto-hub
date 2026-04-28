@@ -2,10 +2,10 @@
   "openapi" : "3.0.1",
   "info" : {
     "title" : "Halo",
-    "version" : "2.23.1"
+    "version" : "2.23.2"
   },
   "servers" : [ {
-    "url" : "http://localhost:52664",
+    "url" : "http://localhost:38626",
     "description" : "Generated server url"
   } ],
   "security" : [ {
@@ -30,6 +30,86 @@
         },
         "summary" : "获取概览信息",
         "tags" : [ "OverviewV1alpha1" ]
+      }
+    },
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence" : {
+      "get" : {
+        "operationId" : "querySentences",
+        "parameters" : [ {
+          "description" : "Page number. Default is 0.",
+          "in" : "query",
+          "name" : "page",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Size number. Default is 0.",
+          "in" : "query",
+          "name" : "size",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Label selector. e.g.: hidden!=true",
+          "in" : "query",
+          "name" : "labelSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Field selector. e.g.: metadata.name==halo",
+          "in" : "query",
+          "name" : "fieldSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Sentences filtered by content keyword.",
+          "in" : "query",
+          "name" : "keyword",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Sentences filtered by category metadata name.",
+          "in" : "query",
+          "name" : "categoryName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SentenceList"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "查询句子",
+        "tags" : [ "SentenceV1alpha1" ]
       }
     },
     "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/batch" : {

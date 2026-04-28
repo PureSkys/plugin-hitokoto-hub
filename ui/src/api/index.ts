@@ -1,11 +1,11 @@
-import { axiosInstance } from '@halo-dev/api-client'
+import {axiosInstance} from '@halo-dev/api-client'
+import type {SentenceList} from './generated'
 import {
   CategoryV1alpha1Api,
   OverviewV1alpha1Api,
   SentencePublicV1alpha1Api,
   SentenceV1alpha1Api,
 } from './generated'
-import type { SentenceList } from './generated'
 
 interface QuerySentencesParams {
   page?: number

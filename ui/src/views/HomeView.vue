@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { markRaw, shallowRef, watch } from 'vue'
+import {markRaw, shallowRef, watch} from 'vue'
 import SentenceList from '@/components/SentenceList.vue'
 import Overview from '@/components/Overview.vue'
-import { useRouteQuery } from '@vueuse/router'
-import { VPageHeader, VTabbar } from '@halo-dev/components'
+import {useRouteQuery} from '@vueuse/router'
+import {VPageHeader, VTabbar} from '@halo-dev/components'
 
 const tabs = shallowRef([
   {
