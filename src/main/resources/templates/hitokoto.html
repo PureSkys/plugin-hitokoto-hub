@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轻雅阁</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+
+<header class="border-b border-slate-100 bg-white/60 backdrop-blur-md sticky top-0 z-10">
+    <div class="max-w-2xl mx-auto px-6 h-14 flex items-center justify-between">
+        <a th:href="@{/hitokoto}" class="flex items-center gap-2">
+            <span class="text-lg">🌙</span>
+            <span class="text-sm font-medium text-slate-600 tracking-widest font-serif">Hitokoto</span>
+        </a>
+        <button
+                onclick="location.reload()"
+                class="group flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+        >
+            <svg class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span class="hidden sm:inline">换一批</span>
+        </button>
+    </div>
+</header>
+
+<main class="max-w-2xl mx-auto px-6 py-10">
+
+    <!-- 分类导航 -->
+    <div class="mb-8 flex flex-wrap justify-center gap-2">
+        <a
+                th:href="@{/hitokoto}"
+                th:classappend="${param.category == null || param.category.isEmpty() ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'}"
+                class="inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs transition-all duration-200"
+        >
+            全部
+        </a>
+        <a
+                th:each="c : ${hitokotoFinder.listCategories()}"
+                th:href="@{/hitokoto(category=${c.name})}"
+                th:classappend="${param.category != null && !param.category.isEmpty() && param.category[0] == c.name ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'}"
+                class="group inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs transition-all duration-200"
+        >
+            <span th:text="${c.displayName}"></span>
+            <span
+                    th:classappend="${param.category != null && !param.category.isEmpty() && param.category[0] == c.name ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}"
+                    class="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] px-1 transition-colors"
+                    th:text="${c.sentenceCount}"></span>
+        </a>
+    </div>
+
+    <!-- ==================== 有分类参数 ==================== -->
+    <th:block th:if="${param.category != null && !param.category.isEmpty()}">
+        <div class="space-y-4">
+            <div
+                    th:each="s : ${hitokotoFinder.randomSentences(8, param.category[0])}"
+                    class="group relative bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+            >
+                <div class="absolute left-4 top-4 bottom-4 w-0.5 bg-gradient-to-b from-amber-200 via-rose-200 to-sky-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <p class="text-sm text-slate-700 leading-loose font-serif" th:text="${s.content}"></p>
+                <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+                        <span th:if="${s.author}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span th:text="${s.author}"></span>
+                        </span>
+                    <span th:if="${s.source}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            <span th:text="${s.source}"></span>
+                        </span>
+                    <span th:if="${s.categoryName}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            <th:block th:each="c : ${hitokotoFinder.listCategories()}">
+                                <span th:if="${c.name == s.categoryName}" th:text="${c.displayName}"></span>
+                            </th:block>
+                        </span>
+                    <span class="inline-flex items-center gap-1 ml-auto">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            <span th:text="${s.likeCount}">0</span>
+                        </span>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- ==================== 无分类参数 ==================== -->
+    <th:block th:if="${param.category == null || param.category.isEmpty()}">
+        <div class="space-y-4">
+            <div
+                    th:each="s : ${hitokotoFinder.randomSentences(8, null)}"
+                    class="group relative bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300"
+            >
+                <div class="absolute left-4 top-4 bottom-4 w-0.5 bg-gradient-to-b from-amber-200 via-rose-200 to-sky-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <p class="text-sm text-slate-700 leading-loose font-serif" th:text="${s.content}"></p>
+                <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+                        <span th:if="${s.author}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span th:text="${s.author}"></span>
+                        </span>
+                    <span th:if="${s.source}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            <span th:text="${s.source}"></span>
+                        </span>
+                    <span th:if="${s.categoryName}" class="inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            <th:block th:each="c : ${hitokotoFinder.listCategories()}">
+                                <span th:if="${c.name == s.categoryName}" th:text="${c.displayName}"></span>
+                            </th:block>
+                        </span>
+                        </span>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+</main>
+
+<footer class="pb-8 text-center">
+    <p class="text-xs text-slate-300">轻风拂面 · 雅韵随心</p>
+</footer>
+
+</body>
+</html>

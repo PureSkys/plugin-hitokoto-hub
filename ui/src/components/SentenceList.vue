@@ -87,7 +87,9 @@
               >
               <span class="category-nav__text">
                 <span class="category-nav__name">{{ category.spec.name }}</span>
-                <span class="category-nav__count">{{
+                <span class="category-nav__count flex items-center gap-1 flex-row">
+                  <VStatusDot v-if="isDeletingCategory(category)" v-bind="{state:'warning'}" />
+                  {{
                     isDeletingCategory(category)
                             ? '删除中'
                             : `${category.status?.sentenceCount ?? 0} 条句子`
@@ -158,9 +160,9 @@
               <VEntityContainer>
                 <VEntity v-for="sentence in sentences" :key="sentence.metadata.name">
                   <template #start>
-                    <VEntityField max-width="640px">
+                    <VEntityField max-width="700px">
                       <template #title>
-                    <span class="whitespace-normal break-words text-sm font-medium text-gray-900">
+                    <span :title="sentence.spec.content" class="block truncate  whitespace-normal wrap-break-word text-sm font-medium text-gray-900">
                       {{ sentence.spec.content }}
                     </span>
                       </template>
