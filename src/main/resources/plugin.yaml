@@ -10,14 +10,14 @@ spec:
   enabled: true
   requires: ">=2.23.0"
   author:
-    name: Cyon
+    name: 晨阳
     website: https://www.puresky.top
   logo: logo.png
   homepage: https://puresky.top
-  repo: https://github.com/PureSkys/hitokoto-hub
-  issues: https://github.com/PureSkys/hitokoto-hub/issues
-  displayName: "hitokoto-hub"
-  description: "hitokoto-hub - Halo 插件"
+  repo: https://github.com/PureSkys/plugin-hitokoto-hub
+  issues: https://github.com/PureSkys/plugin-hitokoto-hub/issues
+  displayName: "轻言"
+  description: "为你的网站注入“一句话”的灵动与温度。它支持创建、管理海量句子，按分类归档，并提供随机获取、关键词搜索、点赞互动等丰富的开放接口。无论是诗词名言、影视台词还是生活感悟，轻言让你的网站成为一个会说话的角落。"
   license:
     - name: "GPL-3.0"
-      url: "https://github.com/Cyon/hitokoto-hub/blob/main/LICENSE"
+      url: "https://github.com/PureSkys/plugin-hitokoto-hub/blob/master/LICENSE"
