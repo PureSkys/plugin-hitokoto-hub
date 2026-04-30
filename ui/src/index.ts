@@ -1,5 +1,5 @@
 import {definePlugin} from '@halo-dev/ui-shared'
-import {IconPlug} from '@halo-dev/components'
+import IconBob from '~icons/my-icons/bob';
 import {markRaw} from 'vue'
 
 export default definePlugin({
@@ -17,7 +17,7 @@ export default definePlugin({
           permissions: ['plugin:hitokoto-hub:view'],
           menu: {
             name: '轻言管理',
-            icon: markRaw(IconPlug),
+            icon: markRaw(IconBob),
             priority: 0,
           },
         },

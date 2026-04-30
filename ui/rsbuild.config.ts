@@ -5,6 +5,7 @@ import type {RsbuildConfig} from '@rsbuild/core';
 import AutoImport from 'unplugin-auto-import/rspack';
 import Components from 'unplugin-vue-components/rspack';
 import {ElementPlusResolver} from 'unplugin-vue-components/resolvers';
+import {FileSystemIconLoader} from "unplugin-icons/loaders";
 
 export default rsbuildConfig({
   rsbuild: {
@@ -22,8 +23,12 @@ export default rsbuildConfig({
       },
       rspack: {
         plugins: [
-          Icons({ compiler: 'vue3' }),
-          // 👇 加上这两行
+          Icons({
+            compiler: 'vue3',
+            customCollections: {
+              'my-icons': FileSystemIconLoader('./src/assets/icons', svg => svg),
+            },
+          }),
           AutoImport({
             resolvers: [ElementPlusResolver()],
           }),

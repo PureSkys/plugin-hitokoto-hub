@@ -4,6 +4,7 @@ import SentenceList from '@/components/SentenceList.vue'
 import Overview from '@/components/Overview.vue'
 import {useRouteQuery} from '@vueuse/router'
 import {VPageHeader, VTabbar} from '@halo-dev/components'
+import IconBob from '~icons/my-icons/bob';
 
 const tabs = shallowRef([
   {
@@ -21,31 +22,33 @@ const tabs = shallowRef([
 const activeIndex = useRouteQuery<string>('tab', tabs.value[0].id)
 
 watch(
-  activeIndex,
-  (value) => {
-    if (!tabs.value.some((tab) => tab.id === value)) {
-      activeIndex.value = 'SentenceList'
-    }
-  },
-  { immediate: true },
+        activeIndex,
+        (value) => {
+          if (!tabs.value.some((tab) => tab.id === value)) {
+            activeIndex.value = 'SentenceList'
+          }
+        },
+        {immediate: true},
 )
 </script>
 
 <template>
   <VPageHeader title="轻言数据管理">
-    <template #icon> </template>
+    <template #icon>
+      <IconBob></IconBob>
+    </template>
   </VPageHeader>
 
   <div class="m-0 space-y-4 md:m-4">
     <div class="border-b border-gray-100 bg-white">
       <VTabbar
-        v-model:active-id="activeIndex"
-        :items="tabs.map((item) => ({ id: item.id, label: item.label }))"
-        class="w-full rounded-none!"
-        type="outline"
+              v-model:active-id="activeIndex"
+              :items="tabs.map((item) => ({ id: item.id, label: item.label }))"
+              class="w-full rounded-none!"
+              type="outline"
       ></VTabbar>
     </div>
-    <Overview ref="overview" v-if="activeIndex == 'Overview'" />
-    <SentenceList ref="sentenceList" v-if="activeIndex == 'SentenceList'" />
+    <Overview ref="overview" v-if="activeIndex == 'Overview'"/>
+    <SentenceList ref="sentenceList" v-if="activeIndex == 'SentenceList'"/>
   </div>
 </template>
