@@ -16,5 +16,5 @@ rules:
     resources: [ "sentences", "categories" ]
     verbs: [ "create", "delete", "deletecollection", "get", "list", "patch", "update", "watch" ]
   - apiGroups: [ "console.api.hitokotohub.puresky.top" ]
-    resources: [ "sentence" ]
-    verbs: [ "create", "get", "list" ]
+    resources: [ "sentence/batch", "sentence/import-excel" ]
+    verbs: [ "create" ]

@@ -45,7 +45,7 @@ export const SentenceV1alpha1ApiAxiosParamCreator = function (configuration?: Co
         batchCreateSentence: async (sentence: Array<Sentence>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'sentence' is not null or undefined
             assertParamExists('batchCreateSentence', 'sentence', sentence)
-            const localVarPath = `/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/batch`;
+            const localVarPath = `/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/-/batch`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -218,7 +218,7 @@ export const SentenceV1alpha1ApiAxiosParamCreator = function (configuration?: Co
             assertParamExists('importExcelSentences', 'categoryName', categoryName)
             // verify required parameter 'file' is not null or undefined
             assertParamExists('importExcelSentences', 'file', file)
-            const localVarPath = `/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/import-excel`;
+            const localVarPath = `/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/-/import-excel`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;

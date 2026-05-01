@@ -112,7 +112,7 @@
         "tags" : [ "SentenceV1alpha1" ]
       }
     },
-    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/batch" : {
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/-/batch" : {
       "post" : {
         "operationId" : "batchCreateSentence",
         "requestBody" : {
@@ -144,7 +144,7 @@
         "tags" : [ "SentenceV1alpha1" ]
       }
     },
-    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/import-excel" : {
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/sentence/-/import-excel" : {
       "post" : {
         "operationId" : "importExcelSentences",
         "requestBody" : {

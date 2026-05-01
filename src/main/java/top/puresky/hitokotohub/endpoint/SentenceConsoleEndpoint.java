@@ -55,7 +55,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
     @Override
     public RouterFunction<ServerResponse> endpoint() {
         return route()
-            .POST("sentence/batch", this::batchCreateSentence, builder -> builder
+            .POST("sentence/-/batch", this::batchCreateSentence, builder -> builder
                 .operationId("batchCreateSentence")
                 .summary("批量创建句子")
                 .tag(TAG)
@@ -66,7 +66,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
                     .required(true))
                 .response(responseBuilder()
                     .implementation(BatchCreateSentenceResult.class)))
-            .POST("sentence/import-excel", this::importExcelSentences, builder -> builder
+            .POST("sentence/-/import-excel", this::importExcelSentences, builder -> builder
                 .operationId("importExcelSentences")
                 .summary("从 Excel 导入句子")
                 .tag(TAG)
