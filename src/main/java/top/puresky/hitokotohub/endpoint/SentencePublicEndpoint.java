@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import run.halo.app.core.extension.endpoint.CustomEndpoint;
 import run.halo.app.extension.GroupVersion;
@@ -149,6 +150,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                         return randomItems;
                     });
             })
+            .flatMap(this::incrementViewCounts)
             .switchIfEmpty(Mono.just(Collections.emptyList()));
 
         if ("text".equalsIgnoreCase(encode)) {
@@ -195,6 +197,19 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                 .defaultIfEmpty(categoryName);
         }
         return Mono.just("全部");
+    }
+
+    private Mono<List<Sentence>> incrementViewCounts(List<Sentence> sentences) {
+        return Flux.fromIterable(sentences)
+            .flatMap(sentence -> {
+                if (sentence.getStatus() == null) {
+                    sentence.setStatus(new Sentence.Status());
+                }
+                long currentViews = sentence.getStatus().getViewCount();
+                sentence.getStatus().setViewCount(currentViews + 1);
+                return client.update(sentence);
+            })
+            .then(Mono.just(sentences));
     }
 
     private Mono<ServerResponse> toggleLike(ServerRequest request) {
