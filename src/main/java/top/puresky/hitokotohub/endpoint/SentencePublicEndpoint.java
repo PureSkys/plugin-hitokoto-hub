@@ -7,10 +7,12 @@ import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,11 +62,19 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                 .parameter(parameterBuilder()
                     .in(ParameterIn.QUERY)
                     .name("limit")
-                    .description("返回数量，默认8条，最多20条")
+                    .description("返回数量，默认1条，最多20条")
                     .implementation(Integer.class)
                     .required(false))
+                .parameter(parameterBuilder()
+                    .in(ParameterIn.QUERY)
+                    .name("encode")
+                    .description(
+                        "返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）")
+                    .implementation(String.class)
+                    .required(false))
                 .response(responseBuilder()
-                    .implementation(RandomSentenceResponse.class)))
+                    .description(
+                        "encode=json（默认）时返回 RandomSentenceResponse，encode=text 时返回 text/plain")))
             .GET("sentence/like", this::toggleLike, builder -> builder
                 .operationId("toggleLike")
                 .summary("点赞/取消点赞句子")
@@ -93,51 +103,98 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
     private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
         String categoryName = request.queryParam("categoryName").orElse(null);
-        int limit = request.queryParam("limit").map(Integer::parseInt).orElse(8);
+        int limit = request.queryParam("limit")
+            .filter(s -> !s.isBlank())
+            .map(Integer::parseInt)
+            .orElse(1);
         int actualLimit = Math.min(limit, 20);
+        String encode = request.queryParam("encode").orElse("json");
 
-        ListOptions options;
+        ListOptions options = buildListOptions(categoryName);
+
+        Mono<String> displayNameMono = getDisplayName(categoryName);
+
+        Mono<List<Sentence>> sentencesMono = client.countBy(Sentence.class, options)
+            .filter(total -> total > 0)
+            .flatMap(total -> {
+                int totalInt = total.intValue();
+                int effectiveSize = Math.min(actualLimit, totalInt);
+                int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
+                int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
+
+                var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
+
+                return client.listBy(Sentence.class, options, pageRequest)
+                    .map(ListResult::getItems)
+                    .flatMap(items -> {
+                        if (items.size() >= effectiveSize || total <= effectiveSize) {
+                            return Mono.just(items);
+                        }
+
+                        int remaining = effectiveSize - items.size();
+                        var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
+
+                        return client.listBy(Sentence.class, options, wrapRequest)
+                            .map(ListResult::getItems)
+                            .map(wrapItems -> {
+                                List<Sentence> combined = new ArrayList<>(items);
+                                combined.addAll(wrapItems);
+                                return combined;
+                            });
+                    })
+                    .map(items -> {
+                        List<Sentence> randomItems = new ArrayList<>(items);
+                        Collections.shuffle(randomItems,
+                            java.util.concurrent.ThreadLocalRandom.current());
+                        return randomItems;
+                    });
+            })
+            .switchIfEmpty(Mono.just(Collections.emptyList()));
+
+        if ("text".equalsIgnoreCase(encode)) {
+            return sentencesMono
+                .map(sentences -> sentences.stream()
+                    .map(s -> s.getSpec().getContent())
+                    .collect(Collectors.joining("\n")))
+                .flatMap(text -> ServerResponse.ok().bodyValue(text));
+        }
+
+        return sentencesMono.zipWith(displayNameMono)
+            .map(tuple -> {
+                List<Sentence> sentences = tuple.getT1();
+                String displayName = tuple.getT2();
+
+                List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
+
+                RandomSentenceResponse response = new RandomSentenceResponse();
+                response.setCategoryName(displayName);
+                response.setRequested(actualLimit);
+                response.setReturned(items.size());
+                response.setSentences(items);
+                return response;
+            })
+            .flatMap(response -> ServerResponse.ok().bodyValue(response));
+    }
+
+    private ListOptions buildListOptions(String categoryName) {
         if (categoryName != null && !categoryName.isBlank()) {
-            options = ListOptions.builder().fieldQuery(
+            return ListOptions.builder().fieldQuery(
                 Queries.and(Queries.equal("spec.categoryName", categoryName),
                     Queries.equal("status.isPublished", true),
                     Queries.isNull("metadata.deletionTimestamp"))).build();
-        } else {
-            options = ListOptions.builder().fieldQuery(
-                Queries.and(Queries.equal("status.isPublished", true),
-                    Queries.isNull("metadata.deletionTimestamp"))).build();
         }
+        return ListOptions.builder().fieldQuery(
+            Queries.and(Queries.equal("status.isPublished", true),
+                Queries.isNull("metadata.deletionTimestamp"))).build();
+    }
 
-        Mono<String> displayNameMono;
+    private Mono<String> getDisplayName(String categoryName) {
         if (categoryName != null && !categoryName.isBlank()) {
-            displayNameMono = client.get(Category.class, categoryName)
-                .map(category -> category.getSpec().getName()).defaultIfEmpty(categoryName);
-        } else {
-            displayNameMono = Mono.just("全部");
+            return client.get(Category.class, categoryName)
+                .map(category -> category.getSpec().getName())
+                .defaultIfEmpty(categoryName);
         }
-
-        return client.countBy(Sentence.class, options).filter(total -> total > 0).flatMap(total -> {
-            int totalPages = (int) Math.ceil((double) total / actualLimit);
-            int randomPage = RandomUtils.insecure().randomInt(1, totalPages + 1);
-
-            return client.listBy(Sentence.class, options,
-                    PageRequestImpl.of(randomPage, actualLimit, Sort.unsorted()))
-                .map(ListResult::getItems);
-        }).defaultIfEmpty(Collections.emptyList()).zipWith(displayNameMono).map(tuple -> {
-            List<Sentence> sentences = tuple.getT1();
-            String displayName = tuple.getT2();
-
-            Collections.shuffle(sentences);
-
-            List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
-
-            RandomSentenceResponse response = new RandomSentenceResponse();
-            response.setCategoryName(displayName);
-            response.setRequested(actualLimit);
-            response.setReturned(items.size());
-            response.setSentences(items);
-            return response;
-        }).flatMap(response -> ServerResponse.ok().bodyValue(response));
+        return Mono.just("全部");
     }
 
     private Mono<ServerResponse> toggleLike(ServerRequest request) {
