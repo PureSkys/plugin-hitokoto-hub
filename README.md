@@ -7,7 +7,7 @@
 ## 🌐 演示与交流
 
 - **演示站点**：[https://www.puresky.top/](https://www.puresky.top/)
-- **文档**：[https://docs.puresky.top/](https://docs.puresky.top/)
+- **文档**：[https://www.puresky.top/docs](https://www.puresky.top/docs)
 - **QQ 交流群**：
     - [![QQ群](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)
 
