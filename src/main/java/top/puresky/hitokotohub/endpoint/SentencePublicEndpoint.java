@@ -105,82 +105,87 @@ public class SentencePublicEndpoint implements CustomEndpoint {
     }
 
     private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
-        settingConfig.getBasicConfig()
-            .doOnNext(config -> log.info("dsadsa{}", config.getMaxRandomLimit()))
-            .subscribe();
-        String categoryName = request.queryParam("categoryName").orElse(null);
-        int limit = request.queryParam("limit")
-            .filter(s -> !s.isBlank())
-            .map(Integer::parseInt)
-            .orElse(1);
-        int actualLimit = Math.min(limit, 20);
-        String encode = request.queryParam("encode").orElse("json");
+        return settingConfig.getBasicConfig().flatMap(config -> {
+            String categoryName = request.queryParam("categoryName")
+                .filter(s -> !s.isBlank())
+                .orElse(config.getDefaultCategory());
+            int limit = request.queryParam("limit")
+                .filter(s -> !s.isBlank())
+                .map(Integer::parseInt)
+                .orElse(config.getRandomLimit());
+            int actualLimit = Math.min(limit, config.getMaxRandomLimit());
+            String encode = request.queryParam("encode")
+                .filter(s -> !s.isBlank())
+                .orElse(config.getEncode());
 
-        ListOptions options = buildListOptions(categoryName);
+            ListOptions options = buildListOptions(categoryName);
 
-        Mono<String> displayNameMono = getDisplayName(categoryName);
+            Mono<String> displayNameMono = getDisplayName(categoryName);
 
-        Mono<List<Sentence>> sentencesMono = client.countBy(Sentence.class, options)
-            .filter(total -> total > 0)
-            .flatMap(total -> {
-                int totalInt = total.intValue();
-                int effectiveSize = Math.min(actualLimit, totalInt);
-                int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
-                int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
+            Mono<List<Sentence>> sentencesMono = client.countBy(Sentence.class, options)
+                .filter(total -> total > 0)
+                .flatMap(total -> {
+                    int totalInt = total.intValue();
+                    int effectiveSize = Math.min(actualLimit, totalInt);
+                    int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
+                    int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
 
-                var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
+                    var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
 
-                return client.listBy(Sentence.class, options, pageRequest)
-                    .map(ListResult::getItems)
-                    .flatMap(items -> {
-                        if (items.size() >= effectiveSize || total <= effectiveSize) {
-                            return Mono.just(items);
-                        }
+                    return client.listBy(Sentence.class, options, pageRequest)
+                        .map(ListResult::getItems)
+                        .flatMap(items -> {
+                            if (items.size() >= effectiveSize || total <= effectiveSize) {
+                                return Mono.just(items);
+                            }
 
-                        int remaining = effectiveSize - items.size();
-                        var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
+                            int remaining = effectiveSize - items.size();
+                            var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
 
-                        return client.listBy(Sentence.class, options, wrapRequest)
-                            .map(ListResult::getItems)
-                            .map(wrapItems -> {
-                                List<Sentence> combined = new ArrayList<>(items);
-                                combined.addAll(wrapItems);
-                                return combined;
-                            });
-                    })
-                    .map(items -> {
-                        List<Sentence> randomItems = new ArrayList<>(items);
-                        Collections.shuffle(randomItems,
-                            java.util.concurrent.ThreadLocalRandom.current());
-                        return randomItems;
-                    });
-            })
-            .flatMap(this::incrementViewCounts)
-            .switchIfEmpty(Mono.just(Collections.emptyList()));
+                            return client.listBy(Sentence.class, options, wrapRequest)
+                                .map(ListResult::getItems)
+                                .map(wrapItems -> {
+                                    List<Sentence> combined = new ArrayList<>(items);
+                                    combined.addAll(wrapItems);
+                                    return combined;
+                                });
+                        })
+                        .map(items -> {
+                            List<Sentence> randomItems = new ArrayList<>(items);
+                            Collections.shuffle(randomItems,
+                                java.util.concurrent.ThreadLocalRandom.current());
+                            return randomItems;
+                        });
+                })
+                .flatMap(sentences -> Boolean.TRUE.equals(config.getEnableViewCount())
+                    ? incrementViewCounts(sentences)
+                    : Mono.just(sentences))
+                .switchIfEmpty(Mono.just(Collections.emptyList()));
 
-        if ("text".equalsIgnoreCase(encode)) {
-            return sentencesMono
-                .map(sentences -> sentences.stream()
-                    .map(s -> s.getSpec().getContent())
-                    .collect(Collectors.joining("\n")))
-                .flatMap(text -> ServerResponse.ok().bodyValue(text));
-        }
+            if ("text".equalsIgnoreCase(encode)) {
+                return sentencesMono
+                    .map(sentences -> sentences.stream()
+                        .map(s -> s.getSpec().getContent())
+                        .collect(Collectors.joining("\n")))
+                    .flatMap(text -> ServerResponse.ok().bodyValue(text));
+            }
 
-        return sentencesMono.zipWith(displayNameMono)
-            .map(tuple -> {
-                List<Sentence> sentences = tuple.getT1();
-                String displayName = tuple.getT2();
+            return sentencesMono.zipWith(displayNameMono)
+                .map(tuple -> {
+                    List<Sentence> sentences = tuple.getT1();
+                    String displayName = tuple.getT2();
 
-                List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
+                    List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
 
-                RandomSentenceResponse response = new RandomSentenceResponse();
-                response.setCategoryName(displayName);
-                response.setRequested(actualLimit);
-                response.setReturned(items.size());
-                response.setSentences(items);
-                return response;
-            })
-            .flatMap(response -> ServerResponse.ok().bodyValue(response));
+                    RandomSentenceResponse response = new RandomSentenceResponse();
+                    response.setCategoryName(displayName);
+                    response.setRequested(actualLimit);
+                    response.setReturned(items.size());
+                    response.setSentences(items);
+                    return response;
+                })
+                .flatMap(response -> ServerResponse.ok().bodyValue(response));
+        });
     }
 
     private ListOptions buildListOptions(String categoryName) {

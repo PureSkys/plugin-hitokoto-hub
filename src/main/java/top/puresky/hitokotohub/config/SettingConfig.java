@@ -11,16 +11,16 @@ public interface SettingConfig {
     class BasicConfig {
         public static final String GROUP = "basic";
         @Schema(description = "最大随机条数")
-        private String maxRandomLimit;
+        private Integer maxRandomLimit;
         @Schema(description = "默认随机条数")
-        private String randomLimit;
+        private Integer randomLimit;
         @Schema(description = "默认分类")
         private String defaultCategory;
         @Schema(description = "默认返回格式")
         private String encode;
         @Schema(description = "点赞冷却时间（小时）")
-        private String likeCooldown;
+        private Integer likeCooldown;
         @Schema(description = "启用浏览量统计")
-        private String enableViewCount;
+        private Boolean enableViewCount;
     }
 }
