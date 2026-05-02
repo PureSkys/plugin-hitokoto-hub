@@ -1,5 +1,7 @@
 package top.puresky.hitokotohub.finder;
 
+import lombok.Builder;
+import lombok.Data;
 import reactor.core.publisher.Flux;
 
 public interface HitokotoFinder {
@@ -8,8 +10,8 @@ public interface HitokotoFinder {
 
     Flux<CategoryVo> listCategories();
 
-    @lombok.Data
-    @lombok.Builder
+    @Data
+    @Builder
     class SentenceVo {
         private String name;
         private String author;
@@ -20,8 +22,8 @@ public interface HitokotoFinder {
         private long viewCount;
     }
 
-    @lombok.Data
-    @lombok.Builder
+    @Data
+    @Builder
     class CategoryVo {
         private String name;
         private String displayName;

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -15,6 +16,7 @@ import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
 import run.halo.app.theme.finders.Finder;
+import top.puresky.hitokotohub.config.SettingConfig;
 import top.puresky.hitokotohub.extension.Category;
 import top.puresky.hitokotohub.extension.Sentence;
 import top.puresky.hitokotohub.finder.HitokotoFinder;
@@ -25,54 +27,76 @@ import top.puresky.hitokotohub.finder.HitokotoFinder;
 public class HitokotoFinderImpl implements HitokotoFinder {
 
     private final ReactiveExtensionClient client;
+    private final SettingConfig settingConfig;
 
     @Override
     public Flux<SentenceVo> randomSentences(int size, String categoryName) {
-        int actualSize = Math.min(size, 20);
-        var query = Queries.equal("status.isPublished", true);
-        if (categoryName != null && !categoryName.isBlank()) {
-            query = Queries.and(query, Queries.equal("spec.categoryName", categoryName));
-        }
-        var options = ListOptions.builder().fieldQuery(query).build();
+        return settingConfig.getBasicConfig()
+            .flatMapMany(config -> {
+                // size 为 0 或负数时用设置里的默认值
+                int actualSize = size > 0
+                    ? Math.min(size, config.getMaxRandomLimit())
+                    : config.getRandomLimit();
 
-        return client.countBy(Sentence.class, options).filter(total -> total > 0)
-            .flatMapMany(total -> {
-                int totalInt = total.intValue();
-                int effectiveSize = Math.min(actualSize, totalInt);
-                int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
-                int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
+                // categoryName 为空时用设置里的默认分类
+                String finalCategory = StringUtils.isNotBlank(categoryName)
+                    ? categoryName
+                    : StringUtils.defaultIfBlank(config.getDefaultCategory(), null);
 
-                var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
+                var query = Queries.equal("status.isPublished", true);
+                if (StringUtils.isNotBlank(finalCategory)) {
+                    query = Queries.and(query, Queries.equal("spec.categoryName", finalCategory));
+                }
+                var options = ListOptions.builder().fieldQuery(query).build();
 
-                return client.listBy(Sentence.class, options, pageRequest).map(ListResult::getItems)
-                    .flatMapMany(items -> {
-                        if (items.size() >= effectiveSize || total <= effectiveSize) {
-                            return Mono.just(items);
-                        }
+                return client.countBy(Sentence.class, options)
+                    .filter(total -> total > 0)
+                    .flatMapMany(total -> {
+                        int totalInt = total.intValue();
+                        int effectiveSize = Math.min(actualSize, totalInt);
+                        int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
+                        int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
 
-                        int remaining = effectiveSize - items.size();
-                        var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
+                        var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
 
-                        return client.listBy(Sentence.class, options, wrapRequest)
-                            .map(ListResult::getItems).map(wrapItems -> {
-                                List<Sentence> combined = new ArrayList<>(items);
-                                combined.addAll(wrapItems);
-                                return combined;
+                        return client.listBy(Sentence.class, options, pageRequest)
+                            .map(ListResult::getItems)
+                            .flatMapMany(items -> {
+                                if (items.size() >= effectiveSize || total <= effectiveSize) {
+                                    return Mono.just(items);
+                                }
+                                int remaining = effectiveSize - items.size();
+                                var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
+                                return client.listBy(Sentence.class, options, wrapRequest)
+                                    .map(ListResult::getItems)
+                                    .map(wrapItems -> {
+                                        List<Sentence> combined = new ArrayList<>(items);
+                                        combined.addAll(wrapItems);
+                                        return combined;
+                                    });
+                            })
+                            .flatMap(items -> {
+                                List<Sentence> randomItems = new ArrayList<>(items);
+                                Collections.shuffle(randomItems,
+                                    java.util.concurrent.ThreadLocalRandom.current());
+
+                                if (config.getEnableViewCount()) {
+                                    return Flux.fromIterable(randomItems)
+                                        .flatMap(sentence -> {
+                                            if (sentence.getStatus() == null) {
+                                                sentence.setStatus(new Sentence.Status());
+                                            }
+                                            sentence.getStatus().setViewCount(
+                                                sentence.getStatus().getViewCount() + 1);
+                                            return client.update(sentence);
+                                        })
+                                        .thenMany(Flux.fromIterable(randomItems));
+                                }
+                                return Flux.fromIterable(randomItems);
                             });
-                    }).flatMap(items -> {
-                        List<Sentence> randomItems = new ArrayList<>(items);
-                        Collections.shuffle(randomItems,
-                            java.util.concurrent.ThreadLocalRandom.current());
-                        return Flux.fromIterable(randomItems).flatMap(sentence -> {
-                            if (sentence.getStatus() == null) {
-                                sentence.setStatus(new Sentence.Status());
-                            }
-                            sentence.getStatus()
-                                .setViewCount(sentence.getStatus().getViewCount() + 1);
-                            return client.update(sentence);
-                        }).thenMany(Flux.fromIterable(randomItems));
-                    });
-            }).map(this::toSentenceVo);
+                    })
+                    .map(this::toSentenceVo);
+            });
     }
 
     @Override

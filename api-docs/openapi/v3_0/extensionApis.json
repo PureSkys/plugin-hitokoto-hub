@@ -5,7 +5,7 @@
     "version" : "2.24.1"
   },
   "servers" : [ {
-    "url" : "http://localhost:54837",
+    "url" : "http://localhost:46533",
     "description" : "Generated server url"
   } ],
   "security" : [ {
