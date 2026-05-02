@@ -143,7 +143,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
                 RandomSentenceResponse response = new RandomSentenceResponse();
                 response.setCategoryName(displayName);
-                response.setRequested(actualLimit);
+                response.setMaxRandomLimit(config.getMaxRandomLimit());
                 response.setReturned(items.size());
                 response.setSentences(items);
                 return response;
@@ -285,8 +285,8 @@ public class SentencePublicEndpoint implements CustomEndpoint {
     public static class RandomSentenceResponse {
         @Schema(description = "请求的分类名称")
         private String categoryName;
-        @Schema(description = "请求数量")
-        private long requested;
+        @Schema(description = "允许的最大请求数量")
+        private long maxRandomLimit;
         @Schema(description = "实际返回数量")
         private long returned;
         @Schema(description = "句子列表")
