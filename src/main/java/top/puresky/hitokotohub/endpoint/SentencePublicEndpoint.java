@@ -43,7 +43,6 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
     private static final String TAG = "SentencePublicV1alpha1";
     private static final String GROUP_VERSION = "public.api.hitokotohub.puresky.top/v1alpha1";
-    private static final long LIKE_COOLDOWN = Duration.ofHours(12).toMillis();
 
     private final SettingConfig settingConfig;
     private final ReactiveExtensionClient client;
@@ -51,52 +50,28 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
     @Override
     public RouterFunction<ServerResponse> endpoint() {
-        return route()
-            .GET("sentence/random", this::getRandomSentences, builder -> builder
-                .operationId("getRandomSentences")
-                .summary("随机获取句子")
-                .tag(TAG)
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("categoryName")
-                    .description("分类名称，不传则返回所有类型")
-                    .implementation(String.class)
-                    .required(false))
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("limit")
-                    .description("返回数量，默认1条，最多20条")
-                    .implementation(Integer.class)
-                    .required(false))
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("encode")
-                    .description(
-                        "返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）")
-                    .implementation(String.class)
-                    .required(false))
-                .response(responseBuilder()
-                    .description(
-                        "encode=json（默认）时返回 RandomSentenceResponse，encode=text 时返回 text/plain")))
-            .GET("sentence/like", this::toggleLike, builder -> builder
-                .operationId("toggleLike")
-                .summary("点赞/取消点赞句子")
-                .tag(TAG)
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("name")
-                    .description("句子名称")
-                    .implementation(String.class)
-                    .required(true))
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("action")
-                    .description("操作类型，like 或 unlike")
-                    .implementation(String.class)
-                    .required(false))
-                .response(responseBuilder()
-                    .implementation(LikeResponse.class)))
-            .build();
+        return route().GET("sentence/random", this::getRandomSentences,
+            builder -> builder.operationId("getRandomSentences").summary("随机获取句子").tag(TAG)
+                .parameter(parameterBuilder().in(ParameterIn.QUERY).name("categoryName")
+                    .description("分类名称，不传则返回所有类型").implementation(String.class)
+                    .required(false)).parameter(
+                    parameterBuilder().in(ParameterIn.QUERY).name("limit")
+                        .description("返回数量，默认1条，最多20条").implementation(Integer.class)
+                        .required(false)).parameter(
+                    parameterBuilder().in(ParameterIn.QUERY).name("encode").description(
+                            "返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）")
+                        .implementation(String.class).required(false)).response(
+                    responseBuilder().description(
+                        "encode=json（默认）时返回 RandomSentenceResponse，encode=text 时返回 "
+                            + "text/plain"))).GET("sentence/like", this::toggleLike,
+            builder -> builder.operationId("toggleLike").summary("点赞/取消点赞句子").tag(TAG)
+                .parameter(
+                    parameterBuilder().in(ParameterIn.QUERY).name("name").description("句子名称")
+                        .implementation(String.class).required(true)).parameter(
+                    parameterBuilder().in(ParameterIn.QUERY).name("action")
+                        .description("操作类型，like 或 unlike").implementation(String.class)
+                        .required(false))
+                .response(responseBuilder().implementation(LikeResponse.class))).build();
     }
 
     @Override
@@ -106,85 +81,73 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
     private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
         return settingConfig.getBasicConfig().flatMap(config -> {
-            String categoryName = request.queryParam("categoryName")
-                .filter(s -> !s.isBlank())
+            String categoryName = request.queryParam("categoryName").filter(s -> !s.isBlank())
                 .orElse(config.getDefaultCategory());
-            int limit = request.queryParam("limit")
-                .filter(s -> !s.isBlank())
-                .map(Integer::parseInt)
+            int limit = request.queryParam("limit").filter(s -> !s.isBlank()).map(Integer::parseInt)
                 .orElse(config.getRandomLimit());
             int actualLimit = Math.min(limit, config.getMaxRandomLimit());
-            String encode = request.queryParam("encode")
-                .filter(s -> !s.isBlank())
-                .orElse(config.getEncode());
+            String encode =
+                request.queryParam("encode").filter(s -> !s.isBlank()).orElse(config.getEncode());
 
             ListOptions options = buildListOptions(categoryName);
 
             Mono<String> displayNameMono = getDisplayName(categoryName);
 
-            Mono<List<Sentence>> sentencesMono = client.countBy(Sentence.class, options)
-                .filter(total -> total > 0)
-                .flatMap(total -> {
-                    int totalInt = total.intValue();
-                    int effectiveSize = Math.min(actualLimit, totalInt);
-                    int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
-                    int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
+            Mono<List<Sentence>> sentencesMono =
+                client.countBy(Sentence.class, options).filter(total -> total > 0)
+                    .flatMap(total -> {
+                        int totalInt = total.intValue();
+                        int effectiveSize = Math.min(actualLimit, totalInt);
+                        int totalPages = (int) Math.ceil((double) totalInt / effectiveSize);
+                        int page = RandomUtils.insecure().randomInt(1, totalPages + 1);
 
-                    var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
+                        var pageRequest = PageRequestImpl.of(page, effectiveSize, Sort.unsorted());
 
-                    return client.listBy(Sentence.class, options, pageRequest)
-                        .map(ListResult::getItems)
-                        .flatMap(items -> {
-                            if (items.size() >= effectiveSize || total <= effectiveSize) {
-                                return Mono.just(items);
-                            }
+                        return client.listBy(Sentence.class, options, pageRequest)
+                            .map(ListResult::getItems).flatMap(items -> {
+                                if (items.size() >= effectiveSize || total <= effectiveSize) {
+                                    return Mono.just(items);
+                                }
 
-                            int remaining = effectiveSize - items.size();
-                            var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
+                                int remaining = effectiveSize - items.size();
+                                var wrapRequest = PageRequestImpl.of(1, remaining, Sort.unsorted());
 
-                            return client.listBy(Sentence.class, options, wrapRequest)
-                                .map(ListResult::getItems)
-                                .map(wrapItems -> {
-                                    List<Sentence> combined = new ArrayList<>(items);
-                                    combined.addAll(wrapItems);
-                                    return combined;
-                                });
-                        })
-                        .map(items -> {
-                            List<Sentence> randomItems = new ArrayList<>(items);
-                            Collections.shuffle(randomItems,
-                                java.util.concurrent.ThreadLocalRandom.current());
-                            return randomItems;
-                        });
-                })
-                .flatMap(sentences -> Boolean.TRUE.equals(config.getEnableViewCount())
-                    ? incrementViewCounts(sentences)
-                    : Mono.just(sentences))
-                .switchIfEmpty(Mono.just(Collections.emptyList()));
+                                return client.listBy(Sentence.class, options, wrapRequest)
+                                    .map(ListResult::getItems).map(wrapItems -> {
+                                        List<Sentence> combined = new ArrayList<>(items);
+                                        combined.addAll(wrapItems);
+                                        return combined;
+                                    });
+                            }).map(items -> {
+                                List<Sentence> randomItems = new ArrayList<>(items);
+                                Collections.shuffle(randomItems,
+                                    java.util.concurrent.ThreadLocalRandom.current());
+                                return randomItems;
+                            });
+                    }).flatMap(sentences -> Boolean.TRUE.equals(config.getEnableViewCount())
+                        ? incrementViewCounts(sentences) : Mono.just(sentences))
+                    .switchIfEmpty(Mono.just(Collections.emptyList()));
 
             if ("text".equalsIgnoreCase(encode)) {
-                return sentencesMono
-                    .map(sentences -> sentences.stream()
-                        .map(s -> s.getSpec().getContent())
-                        .collect(Collectors.joining("\n")))
+                return sentencesMono.map(
+                        sentences -> sentences.stream().map(s -> s.getSpec().getContent())
+                            .collect(Collectors.joining("\n")))
                     .flatMap(text -> ServerResponse.ok().bodyValue(text));
             }
 
-            return sentencesMono.zipWith(displayNameMono)
-                .map(tuple -> {
-                    List<Sentence> sentences = tuple.getT1();
-                    String displayName = tuple.getT2();
+            return sentencesMono.zipWith(displayNameMono).map(tuple -> {
+                List<Sentence> sentences = tuple.getT1();
+                String displayName = tuple.getT2();
 
-                    List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
+                List<SentenceItem> items = sentences.stream().map(this::toSentenceItem).toList();
 
-                    RandomSentenceResponse response = new RandomSentenceResponse();
-                    response.setCategoryName(displayName);
-                    response.setRequested(actualLimit);
-                    response.setReturned(items.size());
-                    response.setSentences(items);
-                    return response;
-                })
-                .flatMap(response -> ServerResponse.ok().bodyValue(response));
+                RandomSentenceResponse response = new RandomSentenceResponse();
+                response.setCategoryName(displayName);
+                response.setRequested(actualLimit);
+                response.setReturned(items.size());
+                response.setSentences(items);
+                return response;
+            }).flatMap(response -> ServerResponse.ok().bodyValue(response));
         });
     }
 
@@ -203,23 +166,20 @@ public class SentencePublicEndpoint implements CustomEndpoint {
     private Mono<String> getDisplayName(String categoryName) {
         if (categoryName != null && !categoryName.isBlank()) {
             return client.get(Category.class, categoryName)
-                .map(category -> category.getSpec().getName())
-                .defaultIfEmpty(categoryName);
+                .map(category -> category.getSpec().getName()).defaultIfEmpty(categoryName);
         }
         return Mono.just("全部");
     }
 
     private Mono<List<Sentence>> incrementViewCounts(List<Sentence> sentences) {
-        return Flux.fromIterable(sentences)
-            .flatMap(sentence -> {
-                if (sentence.getStatus() == null) {
-                    sentence.setStatus(new Sentence.Status());
-                }
-                long currentViews = sentence.getStatus().getViewCount();
-                sentence.getStatus().setViewCount(currentViews + 1);
-                return client.update(sentence);
-            })
-            .then(Mono.just(sentences));
+        return Flux.fromIterable(sentences).flatMap(sentence -> {
+            if (sentence.getStatus() == null) {
+                sentence.setStatus(new Sentence.Status());
+            }
+            long currentViews = sentence.getStatus().getViewCount();
+            sentence.getStatus().setViewCount(currentViews + 1);
+            return client.update(sentence);
+        }).then(Mono.just(sentences));
     }
 
     private Mono<ServerResponse> toggleLike(ServerRequest request) {
@@ -228,48 +188,46 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         String ip = getClientIp(request.exchange().getRequest());
         String likeKey = ip + ":like:" + name;
         String unlikeKey = ip + ":unlike:" + name;
-        boolean isUnlike = "unlike".equals(action);
+        return settingConfig.getBasicConfig().flatMap(config -> {
+            boolean isUnlike = "unlike".equals(action);
+            String checkKey = isUnlike ? unlikeKey : likeKey;
+            Long lastTime = likeCache.get(checkKey);
+            long now = System.currentTimeMillis();
+            long likeCooldown = Duration.ofHours(config.getLikeCooldown()).toMillis();
+            if (lastTime != null && (now - lastTime) < likeCooldown) {
+                long remainingSeconds = likeCooldown / 1000 - ((now - lastTime) / 1000);
+                return client.get(Sentence.class, name).map(
+                        sentence -> buildLikeResponse(sentence, false,
+                            "请在 " + formatRemainingTime(remainingSeconds) + " 后再" + (isUnlike
+                                ? "取消点赞" : "点赞"), "rate_limited"))
+                    .defaultIfEmpty(buildErrorResponse())
+                    .flatMap(response -> ServerResponse.ok().bodyValue(response));
+            }
 
-        String checkKey = isUnlike ? unlikeKey : likeKey;
-        Long lastTime = likeCache.get(checkKey);
-        long now = System.currentTimeMillis();
+            String oppositeKey = isUnlike ? likeKey : unlikeKey;
 
-        if (lastTime != null && (now - lastTime) < LIKE_COOLDOWN) {
-            long remainingSeconds = 12 * 60 * 60 - ((now - lastTime) / 1000);
-            return client.get(Sentence.class, name)
-                .map(sentence -> buildLikeResponse(sentence, false,
-                    "请在 " + formatRemainingTime(remainingSeconds) + " 后再"
-                        + (isUnlike ? "取消点赞" : "点赞"),
-                    "rate_limited"))
-                .defaultIfEmpty(buildErrorResponse())
+            return client.get(Sentence.class, name).flatMap(sentence -> {
+                    if (sentence.getStatus() == null) {
+                        sentence.setStatus(new Sentence.Status());
+                    }
+
+                    long currentLikes = sentence.getStatus().getLikeCount();
+
+                    if (isUnlike) {
+                        sentence.getStatus().setLikeCount(Math.max(0, currentLikes - 1));
+                    } else {
+                        sentence.getStatus().setLikeCount(currentLikes + 1);
+                    }
+
+                    return client.update(sentence).map(updated -> {
+                        likeCache.put(checkKey, System.currentTimeMillis());
+                        likeCache.remove(oppositeKey);
+                        return buildLikeResponse(updated, true, isUnlike ? "取消点赞成功" : "点赞成功",
+                            "ok");
+                    });
+                }).defaultIfEmpty(buildErrorResponse())
                 .flatMap(response -> ServerResponse.ok().bodyValue(response));
-        }
-
-        String oppositeKey = isUnlike ? likeKey : unlikeKey;
-
-        return client.get(Sentence.class, name)
-            .flatMap(sentence -> {
-                if (sentence.getStatus() == null) {
-                    sentence.setStatus(new Sentence.Status());
-                }
-
-                long currentLikes = sentence.getStatus().getLikeCount();
-
-                if (isUnlike) {
-                    sentence.getStatus().setLikeCount(Math.max(0, currentLikes - 1));
-                } else {
-                    sentence.getStatus().setLikeCount(currentLikes + 1);
-                }
-
-                return client.update(sentence).map(updated -> {
-                    likeCache.put(checkKey, System.currentTimeMillis());
-                    likeCache.remove(oppositeKey);
-                    return buildLikeResponse(updated, true,
-                        isUnlike ? "取消点赞成功" : "点赞成功", "ok");
-                });
-            })
-            .defaultIfEmpty(buildErrorResponse())
-            .flatMap(response -> ServerResponse.ok().bodyValue(response));
+        });
     }
 
     private LikeResponse buildLikeResponse(Sentence sentence, boolean success, String message,
@@ -318,9 +276,8 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         if (forwardedFor != null && !forwardedFor.isBlank()) {
             return forwardedFor.split(",")[0].trim();
         }
-        return request.getRemoteAddress() != null
-            ? request.getRemoteAddress().getAddress().getHostAddress()
-            : "unknown";
+        return request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress()
+                                                    .getHostAddress() : "unknown";
     }
 
     @Data

@@ -31,14 +31,9 @@ public class CategoryPublicEndpoint implements CustomEndpoint {
 
     @Override
     public RouterFunction<ServerResponse> endpoint() {
-        return route()
-            .GET("category/list", this::listCategories, builder -> builder
-                .operationId("listCategories")
-                .summary("获取所有分类")
-                .tag(TAG)
-                .response(responseBuilder()
-                    .implementationArray(CategoryItem.class)))
-            .build();
+        return route().GET("category/list", this::listCategories,
+            builder -> builder.operationId("listCategories").summary("获取所有分类").tag(TAG)
+                .response(responseBuilder().implementationArray(CategoryItem.class))).build();
     }
 
     @Override
@@ -60,8 +55,7 @@ public class CategoryPublicEndpoint implements CustomEndpoint {
                 item.setSentenceCount(
                     category.getStatus() != null ? category.getStatus().getSentenceCount() : 0);
                 return item;
-            }).toList())
-            .flatMap(items -> ServerResponse.ok().bodyValue(items));
+            }).toList()).flatMap(items -> ServerResponse.ok().bodyValue(items));
     }
 
     @Data

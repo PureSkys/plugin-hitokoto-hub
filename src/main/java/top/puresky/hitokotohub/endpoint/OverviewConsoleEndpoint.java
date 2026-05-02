@@ -34,14 +34,9 @@ public class OverviewConsoleEndpoint implements CustomEndpoint {
 
     @Override
     public RouterFunction<ServerResponse> endpoint() {
-        return route()
-            .GET("overview", this::getOverview, builder -> builder
-                .operationId("getOverview")
-                .summary("获取概览信息")
-                .tag(TAG)
-                .response(responseBuilder()
-                    .implementation(OverviewResponse.class)))
-            .build();
+        return route().GET("overview", this::getOverview,
+            builder -> builder.operationId("getOverview").summary("获取概览信息").tag(TAG)
+                .response(responseBuilder().implementation(OverviewResponse.class))).build();
     }
 
     @Override
@@ -53,44 +48,28 @@ public class OverviewConsoleEndpoint implements CustomEndpoint {
         Mono<Long> sentenceCount = client.countBy(Sentence.class, null);
         Mono<Long> categoryCount = client.countBy(Category.class, null);
         Mono<Long> publishedSentenceCount = client.countBy(Sentence.class,
-            ListOptions.builder()
-                .fieldQuery(Queries.equal("status.isPublished", true))
-                .build()
-        );
+            ListOptions.builder().fieldQuery(Queries.equal("status.isPublished", true)).build());
         Mono<List<OverviewResponse.CategoryDistribution>> categoryDistribution =
-            client.listAll(Category.class, null, Sort.unsorted())
-                .flatMap(category -> {
-                    OverviewResponse.CategoryDistribution dist =
-                        new OverviewResponse.CategoryDistribution();
-                    String categoryName = category.getMetadata().getName();
-                    String displayName = category.getSpec().getName();
-                    long totalCount = category.getStatus().getSentenceCount();
+            client.listAll(Category.class, null, Sort.unsorted()).flatMap(category -> {
+                OverviewResponse.CategoryDistribution dist =
+                    new OverviewResponse.CategoryDistribution();
+                String categoryName = category.getMetadata().getName();
+                String displayName = category.getSpec().getName();
+                long totalCount = category.getStatus().getSentenceCount();
 
-                    dist.setCategoryName(categoryName);
-                    dist.setDisplayName(displayName);
-                    dist.setCount(totalCount);
+                dist.setCategoryName(categoryName);
+                dist.setDisplayName(displayName);
+                dist.setCount(totalCount);
 
-                    return client.countBy(Sentence.class,
-                            ListOptions.builder()
-                                .fieldQuery(Queries.and(
-                                    Queries.equal("spec.categoryName", categoryName),
-                                    Queries.equal("status.isPublished", true)
-                                )).build()
-                        )
-                        .doOnNext(count -> {
-                            dist.setPublishedCount(count);
-                            dist.setNotPublishedCount(totalCount - count);
-                        })
-                        .thenReturn(dist);
-                })
-                .collectList();
+                return client.countBy(Sentence.class, ListOptions.builder().fieldQuery(
+                    Queries.and(Queries.equal("spec.categoryName", categoryName),
+                        Queries.equal("status.isPublished", true))).build()).doOnNext(count -> {
+                    dist.setPublishedCount(count);
+                    dist.setNotPublishedCount(totalCount - count);
+                }).thenReturn(dist);
+            }).collectList();
 
-        return Mono.zip(
-                sentenceCount,
-                categoryCount,
-                publishedSentenceCount,
-                categoryDistribution
-            )
+        return Mono.zip(sentenceCount, categoryCount, publishedSentenceCount, categoryDistribution)
             .map(tuple -> {
                 OverviewResponse response = new OverviewResponse();
                 response.setSentenceCount(tuple.getT1());
@@ -99,8 +78,7 @@ public class OverviewConsoleEndpoint implements CustomEndpoint {
                 response.setNotPublishedSentenceCount(tuple.getT1() - tuple.getT3());
                 response.setCategoryDistribution(tuple.getT4());
                 return response;
-            })
-            .flatMap(response -> ServerResponse.ok().bodyValue(response));
+            }).flatMap(response -> ServerResponse.ok().bodyValue(response));
     }
 
     @Data

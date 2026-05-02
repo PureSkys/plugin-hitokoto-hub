@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import run.halo.app.core.extension.endpoint.CustomEndpoint;
@@ -54,54 +55,31 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
 
     @Override
     public RouterFunction<ServerResponse> endpoint() {
-        return route()
-            .POST("sentence/-/batch", this::batchCreateSentence, builder -> builder
-                .operationId("batchCreateSentence")
-                .summary("批量创建句子")
-                .tag(TAG)
-                .requestBody(requestBodyBuilder()
-                    .content(contentBuilder()
-                        .array(arraySchemaBuilder()
-                            .schema(schemaBuilder().implementation(Sentence.class))))
-                    .required(true))
-                .response(responseBuilder()
-                    .implementation(BatchCreateSentenceResult.class)))
-            .POST("sentence/-/import-excel", this::importExcelSentences, builder -> builder
-                .operationId("importExcelSentences")
-                .summary("从 Excel 导入句子")
-                .tag(TAG)
-                .requestBody(requestBodyBuilder()
-                    .content(contentBuilder()
-                        .mediaType(MediaType.MULTIPART_FORM_DATA_VALUE)
-                        .schema(schemaBuilder().implementation(ExcelImportRequest.class)))
-                    .required(true))
-                .response(responseBuilder()
-                    .implementation(BatchCreateSentenceResult.class)))
+        return route().POST("sentence/-/batch", this::batchCreateSentence,
+                builder -> builder.operationId("batchCreateSentence").summary("批量创建句子").tag(TAG)
+                    .requestBody(requestBodyBuilder().content(contentBuilder().array(
+                            arraySchemaBuilder().schema(schemaBuilder().implementation(Sentence.class))))
+                        .required(true))
+                    .response(responseBuilder().implementation(BatchCreateSentenceResult.class)))
+            .POST("sentence/-/import-excel", this::importExcelSentences,
+                builder -> builder.operationId("importExcelSentences").summary("从 Excel 导入句子")
+                    .tag(TAG).requestBody(requestBodyBuilder().content(
+                            contentBuilder().mediaType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                .schema(schemaBuilder().implementation(ExcelImportRequest.class)))
+                        .required(true))
+                    .response(responseBuilder().implementation(BatchCreateSentenceResult.class)))
             .GET("sentence", this::querySentences, builder -> {
-                builder.operationId("querySentences")
-                    .summary("查询句子")
-                    .tag(TAG)
-                    .response(responseBuilder()
-                        .implementation(ListResult.generateGenericClass(Sentence.class)));
+                builder.operationId("querySentences").summary("查询句子").tag(TAG).response(
+                    responseBuilder().implementation(
+                        ListResult.generateGenericClass(Sentence.class)));
                 SentenceQuery.buildParameters(builder);
-            })
-            .GET("sentence/search", this::searchSentence, builder -> builder
-                .operationId("searchSentence")
-                .summary("搜索句子")
-                .tag(TAG)
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("keyword")
-                    .implementation(String.class)
-                    .required(true))
-                .parameter(parameterBuilder()
-                    .in(ParameterIn.QUERY)
-                    .name("categoryName")
-                    .implementation(String.class)
-                    .required(false))
-                .response(responseBuilder()
-                    .implementationArray(Sentence.class)))
-            .build();
+            }).GET("sentence/search", this::searchSentence,
+                builder -> builder.operationId("searchSentence").summary("搜索句子").tag(TAG)
+                    .parameter(parameterBuilder().in(ParameterIn.QUERY).name("keyword")
+                        .implementation(String.class).required(true)).parameter(
+                        parameterBuilder().in(ParameterIn.QUERY).name("categoryName")
+                            .implementation(String.class).required(false))
+                    .response(responseBuilder().implementationArray(Sentence.class))).build();
     }
 
     @Override
@@ -110,59 +88,47 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
     }
 
     private Mono<ServerResponse> batchCreateSentence(ServerRequest request) {
-        return request.principal()
-            .map(Principal::getName)
-            .flatMap(username -> {
-                var sentenceFlux = request.bodyToFlux(Sentence.class);
-                return createSentences(sentenceFlux, username);
-            })
-            .flatMap(result -> ServerResponse.ok().bodyValue(result));
+        return request.principal().map(Principal::getName).flatMap(username -> {
+            var sentenceFlux = request.bodyToFlux(Sentence.class);
+            return createSentences(sentenceFlux, username);
+        }).flatMap(result -> ServerResponse.ok().bodyValue(result));
     }
 
     private Mono<ServerResponse> importExcelSentences(ServerRequest request) {
-        return request.principal()
-            .map(Principal::getName)
-            .flatMap(username -> request.multipartData()
-                .flatMap(parts -> {
-                    var file = parts.getFirst("file");
-                    if (!(file instanceof FilePart filePart)) {
-                        return Mono.error(new IllegalArgumentException("请选择 Excel 文件"));
-                    }
-                    if (!filePart.filename().toLowerCase().endsWith(".xlsx")) {
-                        return Mono.error(new IllegalArgumentException("仅支持 .xlsx 文件"));
-                    }
-                    var categoryName = formValue(parts.getFirst("categoryName"));
-                    if (categoryName == null || categoryName.isBlank()) {
-                        return Mono.error(new IllegalArgumentException("请选择目标分类"));
-                    }
-                    var contentField = formValue(parts.getFirst("contentField"));
-                    var authorField = formValue(parts.getFirst("authorField"));
-                    var sourceField = formValue(parts.getFirst("sourceField"));
+        return request.principal().map(Principal::getName)
+            .flatMap(username -> request.multipartData().flatMap(parts -> {
+                var file = parts.getFirst("file");
+                if (!(file instanceof FilePart filePart)) {
+                    return Mono.error(new IllegalArgumentException("请选择 Excel 文件"));
+                }
+                if (!filePart.filename().toLowerCase().endsWith(".xlsx")) {
+                    return Mono.error(new IllegalArgumentException("仅支持 .xlsx 文件"));
+                }
+                var categoryName = formValue(parts.getFirst("categoryName"));
+                if (categoryName == null || categoryName.isBlank()) {
+                    return Mono.error(new IllegalArgumentException("请选择目标分类"));
+                }
+                var contentField = formValue(parts.getFirst("contentField"));
+                var authorField = formValue(parts.getFirst("authorField"));
+                var sourceField = formValue(parts.getFirst("sourceField"));
 
-                    return DataBufferUtils.join(filePart.content())
-                        .flatMap(dataBuffer -> {
-                            byte[] bytes = new byte[dataBuffer.readableByteCount()];
-                            dataBuffer.read(bytes);
-                            DataBufferUtils.release(dataBuffer);
-                            return Mono.fromCallable(() -> parseExcelSentences(bytes,
-                                    categoryName,
-                                    contentField,
-                                    authorField,
-                                    sourceField))
-                                .subscribeOn(Schedulers.boundedElastic());
-                        })
-                        .flatMapMany(sentences -> reactor.core.publisher.Flux.fromIterable(sentences))
-                        .as(sentenceFlux -> createSentences(sentenceFlux, username));
-                }))
-            .flatMap(result -> ServerResponse.ok().bodyValue(result))
-            .onErrorResume(IllegalArgumentException.class, e ->
-                ServerResponse.badRequest().bodyValue(e.getMessage()));
+                return DataBufferUtils.join(filePart.content()).flatMap(dataBuffer -> {
+                        byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                        dataBuffer.read(bytes);
+                        DataBufferUtils.release(dataBuffer);
+                        return Mono.fromCallable(
+                            () -> parseExcelSentences(bytes, categoryName, contentField,
+                                authorField,
+                                sourceField)).subscribeOn(Schedulers.boundedElastic());
+                    }).flatMapMany(Flux::fromIterable)
+                    .as(sentenceFlux -> createSentences(sentenceFlux, username));
+            })).flatMap(result -> ServerResponse.ok().bodyValue(result))
+            .onErrorResume(IllegalArgumentException.class,
+                e -> ServerResponse.badRequest().bodyValue(e.getMessage()));
     }
 
     private Mono<BatchCreateSentenceResult> createSentences(
-        reactor.core.publisher.Flux<Sentence> sentenceFlux,
-        String username
-    ) {
+        reactor.core.publisher.Flux<Sentence> sentenceFlux, String username) {
         AtomicInteger total = new AtomicInteger(0);
         AtomicInteger success = new AtomicInteger(0);
         AtomicInteger failed = new AtomicInteger(0);
@@ -194,13 +160,8 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         }));
     }
 
-    private List<Sentence> parseExcelSentences(
-        byte[] bytes,
-        String categoryName,
-        String contentField,
-        String authorField,
-        String sourceField
-    ) throws IOException {
+    private List<Sentence> parseExcelSentences(byte[] bytes, String categoryName,
+        String contentField, String authorField, String sourceField) throws IOException {
         try (var workbook = new ReadableWorkbook(new ByteArrayInputStream(bytes));
              var rows = workbook.getFirstSheet().openStream()) {
             var iterator = rows.iterator();
@@ -215,10 +176,10 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
             if (contentColumn == null) {
                 throw new IllegalArgumentException("未找到句子内容列");
             }
-            var authorColumn = resolveColumn(headers, authorField,
-                List.of("from_who", "author", "作者"));
-            var sourceColumn = resolveColumn(headers, sourceField,
-                List.of("from", "source", "来源", "出处"));
+            var authorColumn =
+                resolveColumn(headers, authorField, List.of("from_who", "author", "作者"));
+            var sourceColumn =
+                resolveColumn(headers, sourceField, List.of("from", "source", "来源", "出处"));
 
             List<Sentence> sentences = new ArrayList<>();
             while (iterator.hasNext()) {
@@ -246,7 +207,8 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return headers;
     }
 
-    private Integer resolveColumn(Map<String, Integer> headers, String preferred, List<String> aliases) {
+    private Integer resolveColumn(Map<String, Integer> headers, String preferred,
+        List<String> aliases) {
         if (preferred != null && !preferred.isBlank() && headers.containsKey(preferred)) {
             return headers.get(preferred);
         }
@@ -264,7 +226,8 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return row.getCellAsString(columnIndex).orElse("").trim();
     }
 
-    private Sentence buildSentence(String categoryName, String content, String author, String source) {
+    private Sentence buildSentence(String categoryName, String content, String author,
+        String source) {
         var sentence = new Sentence();
         sentence.setMetadata(new Metadata());
         sentence.getMetadata().setGenerateName("sentence-");
@@ -306,12 +269,8 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
     @Data
     @Schema(name = "ExcelImportRequest")
     public static class ExcelImportRequest {
-        @Schema(
-            description = "xlsx 文件",
-            type = "string",
-            format = "binary",
-            requiredMode = Schema.RequiredMode.REQUIRED
-        )
+        @Schema(description = "xlsx 文件", type = "string", format = "binary", requiredMode =
+            Schema.RequiredMode.REQUIRED)
         private String file;
 
         @Schema(description = "目标分类 metadata.name", requiredMode = Schema.RequiredMode.REQUIRED)

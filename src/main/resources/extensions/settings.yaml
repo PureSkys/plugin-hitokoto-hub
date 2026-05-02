@@ -12,7 +12,7 @@ spec:
           label: 最大随机条数
           value: 20
           validation: required|number|min:1|max:100
-          help: 随机接口最大返回的句子数量
+          help: 随机接口允许响应的最大句子数量
         - $formkit: number
           name: randomLimit
           label: 默认随机条数
@@ -23,7 +23,7 @@ spec:
           name: defaultCategory
           label: 默认分类
           value: ""
-          help: 随机接口默认筛选的分类（留空则返回全部分类）
+          help: 随机接口默认筛选的分类（留空则返回全部分类）填写metaData.name
         - $formkit: select
           name: encode
           label: 默认返回格式
