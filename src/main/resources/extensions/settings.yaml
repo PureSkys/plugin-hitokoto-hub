@@ -1,0 +1,48 @@
+apiVersion: v1alpha1
+kind: Setting
+metadata:
+  name: plugin-hitokoto-hub-settings
+spec:
+  forms:
+    - group: basic
+      label: 基本设置
+      formSchema:
+        - $formkit: number
+          name: maxRandomLimit
+          label: 最大随机条数
+          value: 20
+          validation: required|number|min:1|max:100
+          help: 随机接口最大返回的句子数量
+        - $formkit: number
+          name: randomLimit
+          label: 默认随机条数
+          value: 1
+          validation: required|number|min:1|max:100
+          help: 随机接口默认返回的句子数量
+        - $formkit: select
+          name: defaultCategory
+          label: 默认分类
+          value: ""
+          options: []
+          help: 随机接口默认筛选的分类（留空则返回全部分类）
+        - $formkit: select
+          name: encode
+          label: 默认返回格式
+          value: json
+          options:
+            - label: JSON
+              value: json
+            - label: 纯文本
+              value: text
+          help: 随机接口默认的返回格式
+        - $formkit: number
+          name: likeCooldown
+          label: 点赞冷却时间（小时）
+          value: 12
+          validation: required|number|min:1|max:72
+          help: 同一 IP 对同一句子两次点赞的间隔时间
+        - $formkit: switch
+          name: enableViewCount
+          label: 启用浏览量统计
+          value: true
+          help: 随机获取句子时是否自动增加浏览量

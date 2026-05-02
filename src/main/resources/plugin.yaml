@@ -9,6 +9,8 @@ metadata:
 spec:
   enabled: true
   requires: ">=2.23.0"
+  settingName: plugin-hitokoto-hub-settings
+  configMapName: plugin-hitokoto-hub-configmap
   author:
     name: 晨阳
     website: https://www.puresky.top

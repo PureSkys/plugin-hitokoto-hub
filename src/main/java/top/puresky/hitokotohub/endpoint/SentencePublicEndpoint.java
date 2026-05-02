@@ -32,6 +32,7 @@ import run.halo.app.extension.ListResult;
 import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
+import top.puresky.hitokotohub.config.SettingConfig;
 import top.puresky.hitokotohub.extension.Category;
 import top.puresky.hitokotohub.extension.Sentence;
 
@@ -44,6 +45,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
     private static final String GROUP_VERSION = "public.api.hitokotohub.puresky.top/v1alpha1";
     private static final long LIKE_COOLDOWN = Duration.ofHours(12).toMillis();
 
+    private final SettingConfig settingConfig;
     private final ReactiveExtensionClient client;
     private final Map<String, Long> likeCache = new ConcurrentHashMap<>();
 
@@ -103,6 +105,9 @@ public class SentencePublicEndpoint implements CustomEndpoint {
     }
 
     private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
+        settingConfig.getBasicConfig()
+            .doOnNext(config -> log.info("dsadsa{}", config.getMaxRandomLimit()))
+            .subscribe();
         String categoryName = request.queryParam("categoryName").orElse(null);
         int limit = request.queryParam("limit")
             .filter(s -> !s.isBlank())
