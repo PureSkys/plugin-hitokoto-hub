@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,11 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -39,6 +43,7 @@ import top.puresky.hitokotohub.extension.Sentence;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@EnableScheduling
 public class SentencePublicEndpoint implements CustomEndpoint {
 
     private static final String TAG = "SentencePublicV1alpha1";
@@ -53,10 +58,10 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return route().GET("sentence/random", this::getRandomSentences,
             builder -> builder.operationId("getRandomSentences").summary("随机获取句子").tag(TAG)
                 .parameter(parameterBuilder().in(ParameterIn.QUERY).name("categoryName")
-                    .description("分类名称，不传则返回所有类型").implementation(String.class)
+                    .description("分类名称，不传则使用设置中的默认分类").implementation(String.class)
                     .required(false)).parameter(
                     parameterBuilder().in(ParameterIn.QUERY).name("limit")
-                        .description("返回数量，默认1条，最多20条").implementation(Integer.class)
+                        .description("返回数量，默认使用设置值").implementation(Integer.class)
                         .required(false)).parameter(
                     parameterBuilder().in(ParameterIn.QUERY).name("encode").description(
                             "返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）")
@@ -81,17 +86,28 @@ public class SentencePublicEndpoint implements CustomEndpoint {
 
     private Mono<ServerResponse> getRandomSentences(ServerRequest request) {
         return settingConfig.getBasicConfig().flatMap(config -> {
-            String categoryName = request.queryParam("categoryName").filter(s -> !s.isBlank())
-                .orElse(config.getDefaultCategory());
-            int limit = request.queryParam("limit").filter(s -> !s.isBlank()).map(Integer::parseInt)
-                .orElse(config.getRandomLimit());
+            String categoryNameParam = request.queryParam("categoryName")
+                .filter(StringUtils::isNotBlank).orElse(null);
+
+            int limit = request.queryParam("limit").filter(StringUtils::isNotBlank)
+                .map(Integer::parseInt).orElse(config.getRandomLimit());
             int actualLimit = Math.min(limit, config.getMaxRandomLimit());
-            String encode =
-                request.queryParam("encode").filter(s -> !s.isBlank()).orElse(config.getEncode());
+            String encode = request.queryParam("encode").filter(StringUtils::isNotBlank)
+                .orElse(config.getEncode());
 
-            ListOptions options = buildListOptions(categoryName);
+            // 解析默认分类（多行文本）
+            List<String> defaultCategories = parseCategoryLines(config.getDefaultCategory());
 
-            Mono<String> displayNameMono = getDisplayName(categoryName);
+            // 请求参数优先，没有则用设置里的
+            List<String> finalCategories = null;
+            if (StringUtils.isNotBlank(categoryNameParam)) {
+                finalCategories = List.of(categoryNameParam);
+            } else if (!defaultCategories.isEmpty()) {
+                finalCategories = defaultCategories;
+            }
+
+            ListOptions options = buildListOptions(finalCategories);
+            Mono<String> displayNameMono = getDisplayName(finalCategories);
 
             Mono<List<Sentence>> sentencesMono =
                 client.countBy(Sentence.class, options).filter(total -> total > 0)
@@ -151,10 +167,20 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         });
     }
 
-    private ListOptions buildListOptions(String categoryName) {
-        if (categoryName != null && !categoryName.isBlank()) {
+    // 解析多行文本为分类 ID 列表
+    private List<String> parseCategoryLines(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(raw.split("\\n")).map(String::trim)
+            .filter(StringUtils::isNotBlank).toList();
+    }
+
+    // 多分类查询
+    private ListOptions buildListOptions(List<String> categoryNames) {
+        if (categoryNames != null && !categoryNames.isEmpty()) {
             return ListOptions.builder().fieldQuery(
-                Queries.and(Queries.equal("spec.categoryName", categoryName),
+                Queries.and(Queries.in("spec.categoryName", categoryNames),
                     Queries.equal("status.isPublished", true),
                     Queries.isNull("metadata.deletionTimestamp"))).build();
         }
@@ -163,10 +189,13 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                 Queries.isNull("metadata.deletionTimestamp"))).build();
     }
 
-    private Mono<String> getDisplayName(String categoryName) {
-        if (categoryName != null && !categoryName.isBlank()) {
-            return client.get(Category.class, categoryName)
-                .map(category -> category.getSpec().getName()).defaultIfEmpty(categoryName);
+    // 多分类显示名
+    private Mono<String> getDisplayName(List<String> categoryNames) {
+        if (categoryNames != null && !categoryNames.isEmpty()) {
+            return Flux.fromIterable(categoryNames)
+                .flatMap(name -> client.fetch(Category.class, name)
+                    .map(c -> c.getSpec().getName()).defaultIfEmpty(name))
+                .collectList().map(names -> String.join("、", names));
         }
         return Mono.just("全部");
     }
@@ -176,8 +205,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
             if (sentence.getStatus() == null) {
                 sentence.setStatus(new Sentence.Status());
             }
-            long currentViews = sentence.getStatus().getViewCount();
-            sentence.getStatus().setViewCount(currentViews + 1);
+            sentence.getStatus().setViewCount(sentence.getStatus().getViewCount() + 1);
             return client.update(sentence);
         }).then(Mono.just(sentences));
     }
@@ -203,22 +231,17 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                     .defaultIfEmpty(buildErrorResponse())
                     .flatMap(response -> ServerResponse.ok().bodyValue(response));
             }
-
             String oppositeKey = isUnlike ? likeKey : unlikeKey;
-
             return client.get(Sentence.class, name).flatMap(sentence -> {
                     if (sentence.getStatus() == null) {
                         sentence.setStatus(new Sentence.Status());
                     }
-
                     long currentLikes = sentence.getStatus().getLikeCount();
-
                     if (isUnlike) {
                         sentence.getStatus().setLikeCount(Math.max(0, currentLikes - 1));
                     } else {
                         sentence.getStatus().setLikeCount(currentLikes + 1);
                     }
-
                     return client.update(sentence).map(updated -> {
                         likeCache.put(checkKey, System.currentTimeMillis());
                         likeCache.remove(oppositeKey);
@@ -278,6 +301,20 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         }
         return request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress()
                                                     .getHostAddress() : "unknown";
+    }
+
+    @Scheduled(fixedRate = 21600000)
+    public void cleanExpiredLikeCache() {
+        settingConfig.getBasicConfig().doOnNext(config -> {
+            long now = System.currentTimeMillis();
+            long cooldown = Duration.ofHours(config.getLikeCooldown()).toMillis();
+            int before = likeCache.size();
+            likeCache.entrySet().removeIf(entry -> (now - entry.getValue()) > cooldown);
+            int after = likeCache.size();
+            if (before != after) {
+                log.info("清理过期点赞缓存: {} -> {}", before, after);
+            }
+        }).subscribe();
     }
 
     @Data

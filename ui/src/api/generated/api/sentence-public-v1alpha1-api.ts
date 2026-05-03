@@ -32,8 +32,8 @@ export const SentencePublicV1alpha1ApiAxiosParamCreator = function (configuratio
         /**
          * 
          * @summary 随机获取句子
-         * @param {string} [categoryName] 分类名称，不传则返回所有类型
-         * @param {number} [limit] 返回数量，默认1条，最多20条
+         * @param {string} [categoryName] 分类名称，不传则使用设置中的默认分类
+         * @param {number} [limit] 返回数量，默认使用设置值
          * @param {string} [encode] 返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -145,8 +145,8 @@ export const SentencePublicV1alpha1ApiFp = function(configuration?: Configuratio
         /**
          * 
          * @summary 随机获取句子
-         * @param {string} [categoryName] 分类名称，不传则返回所有类型
-         * @param {number} [limit] 返回数量，默认1条，最多20条
+         * @param {string} [categoryName] 分类名称，不传则使用设置中的默认分类
+         * @param {number} [limit] 返回数量，默认使用设置值
          * @param {string} [encode] 返回格式：json 返回 RandomSentenceResponse，text 返回纯文本（每行一句）
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -211,14 +211,14 @@ export const SentencePublicV1alpha1ApiFactory = function (configuration?: Config
  */
 export interface SentencePublicV1alpha1ApiGetRandomSentencesRequest {
     /**
-     * 分类名称，不传则返回所有类型
+     * 分类名称，不传则使用设置中的默认分类
      * @type {string}
      * @memberof SentencePublicV1alpha1ApiGetRandomSentences
      */
     readonly categoryName?: string
 
     /**
-     * 返回数量，默认1条，最多20条
+     * 返回数量，默认使用设置值
      * @type {number}
      * @memberof SentencePublicV1alpha1ApiGetRandomSentences
      */

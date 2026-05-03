@@ -1,6 +1,7 @@
 package top.puresky.hitokotohub.finder.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,19 +34,23 @@ public class HitokotoFinderImpl implements HitokotoFinder {
     public Flux<SentenceVo> randomSentences(int size, String categoryName) {
         return settingConfig.getBasicConfig()
             .flatMapMany(config -> {
-                // size 为 0 或负数时用设置里的默认值
                 int actualSize = size > 0
                     ? Math.min(size, config.getMaxRandomLimit())
                     : config.getRandomLimit();
 
-                // categoryName 为空时用设置里的默认分类
-                String finalCategory = StringUtils.isNotBlank(categoryName)
-                    ? categoryName
-                    : StringUtils.defaultIfBlank(config.getDefaultCategory(), null);
+                // 解析请求参数和默认分类
+                List<String> defaultCategories = parseCategoryLines(config.getDefaultCategory());
+
+                List<String> finalCategories = null;
+                if (StringUtils.isNotBlank(categoryName)) {
+                    finalCategories = List.of(categoryName);
+                } else if (!defaultCategories.isEmpty()) {
+                    finalCategories = defaultCategories;
+                }
 
                 var query = Queries.equal("status.isPublished", true);
-                if (StringUtils.isNotBlank(finalCategory)) {
-                    query = Queries.and(query, Queries.equal("spec.categoryName", finalCategory));
+                if (finalCategories != null) {
+                    query = Queries.and(query, Queries.in("spec.categoryName", finalCategories));
                 }
                 var options = ListOptions.builder().fieldQuery(query).build();
 
@@ -104,6 +109,13 @@ public class HitokotoFinderImpl implements HitokotoFinder {
         return client.listAll(Category.class, new ListOptions(), Sort.unsorted())
             .filter(c -> c.getStatus() != null && c.getStatus().getSentenceCount() > 0)
             .map(this::toCategoryVo);
+    }
+
+    // 解析多行文本为分类 ID 列表
+    private List<String> parseCategoryLines(String raw) {
+        if (raw == null || raw.isBlank()) return Collections.emptyList();
+        return Arrays.stream(raw.split("\\n")).map(String::trim)
+            .filter(StringUtils::isNotBlank).toList();
     }
 
     private SentenceVo toSentenceVo(Sentence s) {

@@ -5,7 +5,7 @@
     "version" : "2.24.1"
   },
   "servers" : [ {
-    "url" : "http://localhost:46533",
+    "url" : "http://localhost:38305",
     "description" : "Generated server url"
   } ],
   "security" : [ {
@@ -692,14 +692,14 @@
       "get" : {
         "operationId" : "getRandomSentences",
         "parameters" : [ {
-          "description" : "分类名称，不传则返回所有类型",
+          "description" : "分类名称，不传则使用设置中的默认分类",
           "in" : "query",
           "name" : "categoryName",
           "schema" : {
             "type" : "string"
           }
         }, {
-          "description" : "返回数量，默认1条，最多20条",
+          "description" : "返回数量，默认使用设置值",
           "in" : "query",
           "name" : "limit",
           "schema" : {

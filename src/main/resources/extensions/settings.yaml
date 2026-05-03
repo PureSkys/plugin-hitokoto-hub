@@ -19,11 +19,11 @@ spec:
           value: 1
           validation: required|number|min:1|max:100
           help: 随机接口默认返回的句子数量
-        - $formkit: text
+        - $formkit: textarea
           name: defaultCategory
           label: 默认分类
           value: ""
-          help: 随机接口默认筛选的分类（留空则返回全部分类）填写metaData.name
+          help: 每行一个分类 ID（metadata.name），留空则返回全部分类
         - $formkit: select
           name: encode
           label: 默认返回格式
