@@ -7,9 +7,12 @@
 ## 🌐 演示与交流
 
 - **演示站点**：[https://www.puresky.top/](https://www.puresky.top/)
-- **文档**：[https://www.puresky.top/docs](https://www.puresky.top/docs)
+- **文档**：[https://www.puresky.top/docs/](https://www.puresky.top/docs/)
 - **QQ 交流群**：
-    - [![QQ群](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)](https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png)
+
+<a href="https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png">
+  <img src="https://www.lik.cc/upload/iShot_2025-03-03_16.03.00.png" width="180" alt="QQ群">
+</a>
 
 ## 功能特性
 
@@ -21,6 +24,7 @@
 - **主题集成**：提供 Finder API，可在 Halo 主题模板中直接调用
 - **数据看板**：后台概览页面，展示句子总数、分类分布、发布状态统计
 - **权限控制**：基于 Halo RBAC 角色模板，支持公开 API 和后台管理权限分离
+
 ## 插件截图
 
 | | |
@@ -29,22 +33,25 @@
 | 轻言数据概览 | 轻言数据管理 |
 | ![轻言数据批量导入](https://www.puresky.top/upload/1777469675652.webp) | ![轻言单条数据创建](https://www.puresky.top/upload/1777469694151.webp) |
 | 轻言数据批量导入 | 轻言单条数据创建 |
-| ![轻言默认模板](https://www.puresky.top/upload/1777469731702.webp) |
+| ![轻言默认模板](https://www.puresky.top/upload/1777735550856.webp) |
 | 轻言默认模板 |
 ## 安装
 
-1. 下载最新版本的 [Releases](https://github.com/PureSkys/plugin-hitokoto-hub/releases)
+1. 下载最新版本的 [Releases](https://github.com/imorisun/plugin-hitokoto-hub/releases)
 2. 在 Halo 后台的"插件"管理中上传并启用
 3. 启用后，左侧菜单会出现"轻言"入口
 
 ## 使用指南
+### API文档
+[Apifox文档](https://plugin-hitokoto-hub.apifox.cn/)
 
 ### 基础使用
 
 1. **创建分类**：在左侧分类面板中点击 `+` 号，创建句子分类
 2. **新建句子**：点击右上角"新建句子"，填写内容、选择分类
 3. **批量导入**：支持 JSON 和 Excel 两种格式，自动映射字段
-4. **随机获取**：前端调用 `/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random` 接口
+4. **随机获取句子**：前端调用 `/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random` 接口
+5. **获取分类数据**：前端调用 `/apis/public.api.hitokotohub.puresky.top/v1alpha1/category/list` 接口
 
 ### 主题集成
 #### 插件提供一个默认的模板，模板地址为`/hitokoto`，当然您也可以通过 Finder API 自定义模板
@@ -57,8 +64,8 @@
 在主题模板中直接调用：
 
 ```html
-<!-- 随机获取 8 条句子 -->
-<div th:each="s : ${hitokotoFinder.randomSentences(8)}">
+<!-- 随机获取 1 条随机的句子 -->
+<div th:each="s : ${hitokotoFinder.randomSentences(1,null)}">
   <p th:text="${s.content}"></p>
   <span th:text="${s.author}"></span>
 </div>
@@ -82,7 +89,6 @@
 // 随机获取句子
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random?limit=8')
   .then(res => res.json())
-  .then(data => console.log(data))
 
 // 按分类随机获取
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random?categoryName=category-xxx&limit=8')
@@ -117,7 +123,7 @@ fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/like?action=un
 
 ```bash
 # 克隆项目
-git clone https://github.com/PureSkys/plugin-hitokoto-hub.git
+git clone https://github.com/imorisun/plugin-hitokoto-hub.git
 
 # 构建前端
 cd ui
@@ -129,7 +135,7 @@ cd ..
 ./gradlew build
 ```
 ## 许可
-[GPL-3.0](./LICENSE) © [晨阳](https://github.com/PureSkys)
+[GPL-3.0](./LICENSE) © [imorisun](https://github.com/imorisun)
 
 
 ## 致谢
