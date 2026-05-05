@@ -23,7 +23,7 @@ spec:
           name: defaultCategory
           label: 默认分类
           value: ""
-          help: 每行一个分类 ID（metadata.name），留空则返回全部分类
+          help: 每行一个metaDataName（可前往概览页面获取），留空则返回全部分类
         - $formkit: select
           name: encode
           label: 默认返回格式

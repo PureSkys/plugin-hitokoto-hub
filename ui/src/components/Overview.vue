@@ -85,7 +85,9 @@
           <template #header>
             <div class="flex items-center justify-between">
               <span class="font-semibold text-slate-900">句子状态统计</span>
-              <el-tag type="info" size="small">共 {{ statsData.sentenceCount.toLocaleString() }} 条</el-tag>
+              <el-tag type="info" size="small">共 {{ statsData.sentenceCount.toLocaleString() }}
+                条
+              </el-tag>
             </div>
           </template>
           <v-chart :option="statusChartOption" style="height: 320px; width: 100%;" autoresize/>
@@ -106,23 +108,30 @@
                 :stripe="true"
                 table-layout="auto"
         >
-          <el-table-column prop="displayName" label="分类名称" min-width="120"/>
-          <el-table-column label="句子总数" min-width="100">
+          <el-table-column label="metaDataName">
             <template #default="{ row }">
-              <el-tag type="info" effect="plain">{{ row.count }}</el-tag>
+              <span class="cursor-pointer" @click="copyToClipboard(row.categoryName)">
+                {{ row.categoryName }}
+              </span>
             </template>
           </el-table-column>
-          <el-table-column label="已发布" min-width="80">
+          <el-table-column prop="displayName" label="分类名称"/>
+          <el-table-column label="句子总数" min-width="100">
+            <template #default="{ row }">
+              <span class="font-medium">{{ row.count }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="已发布">
             <template #default="{ row }">
               <span class="font-medium text-green-600">{{ row.publishedCount }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="未发布" min-width="80">
+          <el-table-column label="未发布">
             <template #default="{ row }">
               <span class="font-medium text-red-600">{{ row.notPublishedCount }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="发布比例" min-width="180">
+          <el-table-column label="发布比例">
             <template #default="{ row }">
               <div class="flex items-center gap-3">
                 <el-progress
@@ -151,7 +160,7 @@ import {use} from 'echarts/core'
 import {BarChart, PieChart} from 'echarts/charts'
 import {GridComponent, LegendComponent, TitleComponent, TooltipComponent} from 'echarts/components'
 import {CanvasRenderer} from 'echarts/renderers'
-import {VCard} from "@halo-dev/components"
+import {Toast, VCard} from "@halo-dev/components"
 import {overviewV1alpha1ApiClient} from "@/api"
 
 use([PieChart, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer])
@@ -199,7 +208,7 @@ const categoryChartOption = computed(() => {
   return {
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'shadow' }
+      axisPointer: {type: 'shadow'}
     },
     legend: {
       data: ['已发布', '未发布'],
@@ -229,14 +238,14 @@ const categoryChartOption = computed(() => {
         type: 'bar',
         stack: 'total',
         data: publishedData,
-        itemStyle: { color: '#10b981' }
+        itemStyle: {color: '#10b981'}
       },
       {
         name: '未发布',
         type: 'bar',
         stack: 'total',
         data: notPublishedData,
-        itemStyle: { color: '#ef4444', borderRadius: [4, 4, 0, 0] }
+        itemStyle: {color: '#ef4444', borderRadius: [4, 4, 0, 0]}
       }
     ]
   }
@@ -288,12 +297,12 @@ const statusChartOption = computed(() => {
           {
             value: statsData.value.publishedSentenceCount,
             name: '已发布',
-            itemStyle: { color: '#10b981' }
+            itemStyle: {color: '#10b981'}
           },
           {
             value: statsData.value.notPublishedSentenceCount,
             name: '未发布',
-            itemStyle: { color: '#ef4444' }
+            itemStyle: {color: '#ef4444'}
           }
         ]
       }
@@ -305,6 +314,13 @@ onMounted(() => {
     statsData.value = response.data as any
   })
 })
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    Toast.success("已复制到剪贴板");
+  }).catch(() => {
+    Toast.error("复制失败");
+  });
+}
 </script>
 
 <style scoped>
@@ -313,6 +329,7 @@ onMounted(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 .custom-card {
   border-radius: 1rem;
   border: 1px solid #e5e7eb !important;
