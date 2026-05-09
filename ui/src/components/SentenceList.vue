@@ -134,6 +134,10 @@
                   { label: '默认' },
                   { label: '较近创建', value: 'metadata.creationTimestamp,desc' },
                   { label: '较早创建', value: 'metadata.creationTimestamp,asc' },
+                  { label: '最多浏览', value: 'status.viewCount,desc' },
+                  { label: '最少浏览', value: 'status.viewCount,asc' },
+                  { label: '最多点赞', value: 'status.likeCount,desc' },
+                  { label: '最少点赞', value: 'status.likeCount,asc' },
                 ]"
               />
               <button
@@ -161,7 +165,7 @@
               <VEntityContainer>
                 <VEntity v-for="sentence in sentences" :key="sentence.metadata.name">
                   <template #start>
-                    <VEntityField max-width="700px">
+                    <VEntityField max-width="620px">
                       <template #title>
                     <span :title="sentence.spec.content"
                           class="block truncate  whitespace-normal wrap-break-word text-sm font-medium text-gray-900">
@@ -193,7 +197,7 @@
                       <template #description>
                         <div class="flex items-center gap-1 text-gray-500">
                           <el-icon :size="14">
-                            <StarFilled/>
+                            <IconLike/>
                           </el-icon>
                           <span :title="'点赞'" class="text-sm">{{
                               sentence.status?.likeCount ?? 0
@@ -597,10 +601,11 @@ import {
   VTag,
 } from '@halo-dev/components'
 import {utils} from '@halo-dev/ui-shared'
-import {Delete, EditPen, StarFilled, View} from '@element-plus/icons-vue'
+import {Delete, EditPen, View} from '@element-plus/icons-vue'
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
 import {categoryCoreApiClient, sentenceCoreApiClient} from '@/api'
 import type {BatchCreateSentenceResult, Category, Sentence} from '@/api/generated'
+import IconLike from '~icons/my-icons/like';
 import * as XLSX from 'xlsx'
 
 const xlsxRows = ref<any[][]>([])
@@ -806,7 +811,9 @@ const fetchSentencesSilently = async () => {
       params.categoryName = selectedCategory.value
     }
     if (selectedSort.value) {
-      params.sort = selectedSort.value
+      params.sort = Array.isArray(selectedSort.value)
+              ? selectedSort.value[0]
+              : selectedSort.value;
     }
 
     const {data} = await sentenceCoreApiClient.querySentences(params)
@@ -862,7 +869,9 @@ const fetchSentences = async () => {
       params.categoryName = selectedCategory.value
     }
     if (selectedSort.value) {
-      params.sort = selectedSort.value
+      params.sort = Array.isArray(selectedSort.value)
+              ? selectedSort.value[0]
+              : selectedSort.value;
     }
 
     const {data} = await sentenceCoreApiClient.querySentences(params)
