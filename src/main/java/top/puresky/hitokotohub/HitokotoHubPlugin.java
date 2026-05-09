@@ -35,7 +35,6 @@ public class HitokotoHubPlugin extends BasePlugin {
                     .nullable(false)
                     .build()
             );
-
             sentenceIndexSpecs.add(
                 IndexSpecs.<Sentence, Boolean>single("status.isPublished", Boolean.class)
                     .indexFunc(sentence -> sentence.getStatus().isPublished())
@@ -45,6 +44,18 @@ public class HitokotoHubPlugin extends BasePlugin {
             sentenceIndexSpecs.add(
                 IndexSpecs.<Sentence, String>single("spec.content", String.class)
                     .indexFunc(sentence -> sentence.getSpec().getContent())
+                    .nullable(false)
+                    .build()
+            );
+            sentenceIndexSpecs.add(
+                IndexSpecs.<Sentence, Long>single("status.viewCount", Long.class)
+                    .indexFunc(sentence -> sentence.getStatus().getViewCount())
+                    .nullable(false)
+                    .build()
+            );
+            sentenceIndexSpecs.add(
+                IndexSpecs.<Sentence, Long>single("status.likeCount", Long.class)
+                    .indexFunc(sentence -> sentence.getStatus().getLikeCount())
                     .nullable(false)
                     .build()
             );
