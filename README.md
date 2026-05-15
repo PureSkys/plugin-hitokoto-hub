@@ -27,14 +27,15 @@
 
 ## 插件截图
 
-| | |
-|---|---|
-| ![轻言数据概览](https://www.puresky.top/upload/1777469591419.webp) | ![轻言数据管理](https://www.puresky.top/upload/1777469648699.webp) |
-| 轻言数据概览 | 轻言数据管理 |
+|                                                                |                                                                |
+|----------------------------------------------------------------|----------------------------------------------------------------|
+| ![轻言数据概览](https://www.puresky.top/upload/1777469591419.webp)   | ![轻言数据管理](https://www.puresky.top/upload/1777469648699.webp)   |
+| 轻言数据概览                                                         | 轻言数据管理                                                         |
 | ![轻言数据批量导入](https://www.puresky.top/upload/1777469675652.webp) | ![轻言单条数据创建](https://www.puresky.top/upload/1777469694151.webp) |
-| 轻言数据批量导入 | 轻言单条数据创建 |
-| ![轻言默认模板](https://www.puresky.top/upload/1777735550856.webp) |
-| 轻言默认模板 |
+| 轻言数据批量导入                                                       | 轻言单条数据创建                                                       |
+| ![轻言默认模板](https://www.puresky.top/upload/1777735550856.webp)   |
+| 轻言默认模板                                                         |
+
 ## 安装
 
 1. 下载最新版本的 [Releases](https://github.com/imorisun/plugin-hitokoto-hub/releases)
@@ -42,7 +43,14 @@
 3. 启用后，左侧菜单会出现"轻言"入口
 
 ## 使用指南
+
+### 可用数据源
+
+- [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
+- [sentences-bundle国内加速镜像](https://gitcode.com/gh_mirrors/se/sentences-bundle)
+
 ### API文档
+
 [Apifox文档](https://plugin-hitokoto-hub.apifox.cn/)
 
 ### 基础使用
@@ -54,10 +62,13 @@
 5. **获取分类数据**：前端调用 `/apis/public.api.hitokotohub.puresky.top/v1alpha1/category/list` 接口
 
 ### 主题集成
+
 #### 插件提供一个默认的模板，模板地址为`/hitokoto`，当然您也可以通过 Finder API 自定义模板
 
 #### 方式一：Finder API（推荐）
+
 可用的 Finder API：
+
 - `hitokotoFinder.listCategories()`
 - `hitokotoFinder.randomSentences(int limit, String category)`
 
@@ -66,18 +77,18 @@
 ```html
 <!-- 随机获取 1 条随机的句子 -->
 <div th:each="s : ${hitokotoFinder.randomSentences(1,null)}">
-  <p th:text="${s.content}"></p>
-  <span th:text="${s.author}"></span>
+    <p th:text="${s.content}"></p>
+    <span th:text="${s.author}"></span>
 </div>
 
 <!-- 获取分类列表 -->
 <div th:each="c : ${hitokotoFinder.listCategories()}">
-  <a th:href="@{/hitokoto(category=${c.name})}" th:text="${c.displayName}"></a>
+    <a th:href="@{/hitokoto(category=${c.name})}" th:text="${c.displayName}"></a>
 </div>
 
 <!-- 按分类随机获取 -->
 <div th:each="s : ${hitokotoFinder.randomSentences(8, 'category-xxx')}">
-  <p th:text="${s.content}"></p>
+    <p th:text="${s.content}"></p>
 </div>
 ```
 
@@ -88,15 +99,15 @@
 ```javascript
 // 随机获取句子
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random?limit=8')
-  .then(res => res.json())
+        .then(res => res.json())
 
 // 按分类随机获取
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/random?categoryName=category-xxx&limit=8')
-  .then(res => res.json())
+        .then(res => res.json())
 
 // 获取分类
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/category/list')
-  .then(res => res.json())
+        .then(res => res.json())
 
 // 点赞句子
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/like?action=like')
@@ -104,20 +115,21 @@ fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/like?action=li
 
 // 取消点赞
 fetch('/apis/public.api.hitokotohub.puresky.top/v1alpha1/sentence/like?action=unlike')
-  .then(res => res.json())
+        .then(res => res.json())
 ```
 
 ## 公开 API 说明
 
-| 接口 | 方法  | 说明                                                               |
-|------|-----|------------------------------------------------------------------|
+| 接口                 | 方法  | 说明                                                               |
+|--------------------|-----|------------------------------------------------------------------|
 | `/sentence/random` | GET | 随机获取句子，支持 `categoryName` 和 `limit` 参数                            |
-| `/sentence/like` | GET | 点赞/取消点赞，参数 `action=like` 或 `action=unlike`以及`name=sentence-xxxx` |
-| `/category/list` | GET | 获取分类列表                                                           |
+| `/sentence/like`   | GET | 点赞/取消点赞，参数 `action=like` 或 `action=unlike`以及`name=sentence-xxxx` |
+| `/category/list`   | GET | 获取分类列表                                                           |
 
 ## 角色权限
 
-插件部署后会自动创建一个名为"轻言-公共接口"的角色模板，已自动授权给匿名用户。若需后台管理权限，请确保当前用户具有 `plugin:hitokoto-hub:manage` 权限。
+插件部署后会自动创建一个名为"轻言-公共接口"的角色模板，已自动授权给匿名用户。若需后台管理权限，请确保当前用户具有
+`plugin:hitokoto-hub:manage` 权限。
 
 ## 开发
 
@@ -134,9 +146,10 @@ pnpm build
 cd ..
 ./gradlew build
 ```
-## 许可
-[GPL-3.0](./LICENSE) © [imorisun](https://github.com/imorisun)
 
+## 许可
+
+[GPL-3.0](./LICENSE) © [imorisun](https://github.com/imorisun)
 
 ## 致谢
 

@@ -19,10 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -33,17 +33,18 @@ import run.halo.app.core.extension.endpoint.CustomEndpoint;
 import run.halo.app.extension.GroupVersion;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ListResult;
+import run.halo.app.extension.Metadata;
 import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
 import top.puresky.hitokotohub.config.SettingConfig;
 import top.puresky.hitokotohub.extension.Category;
+import top.puresky.hitokotohub.extension.CategoryViewRecord;
 import top.puresky.hitokotohub.extension.Sentence;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@EnableScheduling
 public class SentencePublicEndpoint implements CustomEndpoint {
 
     private static final String TAG = "SentencePublicV1alpha1";
@@ -141,7 +142,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                                 return randomItems;
                             });
                     }).flatMap(sentences -> Boolean.TRUE.equals(config.getEnableViewCount())
-                        ? incrementViewCounts(sentences) : Mono.just(sentences))
+                        ? incrementAndRecordViews(sentences) : Mono.just(sentences))
                     .switchIfEmpty(Mono.just(Collections.emptyList()));
 
             if ("text".equalsIgnoreCase(encode)) {
@@ -200,17 +201,31 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return Mono.just("全部");
     }
 
-    private Mono<List<Sentence>> incrementViewCounts(List<Sentence> sentences) {
-        return Flux.fromIterable(sentences).flatMap(sentence -> {
-            if (sentence.getStatus() == null) {
-                sentence.setStatus(new Sentence.Status());
-            }
-            sentence.getStatus().setViewCount(sentence.getStatus().getViewCount() + 1);
-            return client.update(sentence);
-        }).then(Mono.just(sentences));
+
+    private @NonNull Mono<List<Sentence>> incrementAndRecordViews(List<Sentence> sentences) {
+        return Flux.fromIterable(sentences)
+            .flatMap(sentence -> {
+                if (sentence.getStatus() == null) {
+                    sentence.setStatus(new Sentence.Status());
+                }
+                sentence.getStatus().setViewCount(sentence.getStatus().getViewCount() + 1);
+
+                // 记录分类浏览
+                CategoryViewRecord record = new CategoryViewRecord();
+                record.setMetadata(new Metadata());
+                record.getMetadata().setGenerateName("cvr-");
+                record.setSpec(new CategoryViewRecord.Spec());
+                record.getSpec().setCategoryName(sentence.getSpec().getCategoryName());
+                record.getSpec().setEventType(CategoryViewRecord.EventType.VIEW);
+
+                return client.update(sentence)
+                    .then(client.create(record))
+                    .thenReturn(sentence);
+            })
+            .then(Mono.just(sentences));
     }
 
-    private Mono<ServerResponse> toggleLike(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> toggleLike(@NonNull ServerRequest request) {
         String name = request.queryParam("name").orElse("");
         String action = request.queryParam("action").orElse("like");
         String ip = getClientIp(request.exchange().getRequest());
@@ -242,18 +257,33 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                     } else {
                         sentence.getStatus().setLikeCount(currentLikes + 1);
                     }
-                    return client.update(sentence).map(updated -> {
-                        likeCache.put(checkKey, System.currentTimeMillis());
-                        likeCache.remove(oppositeKey);
-                        return buildLikeResponse(updated, true, isUnlike ? "取消点赞成功" : "点赞成功",
-                            "ok");
-                    });
-                }).defaultIfEmpty(buildErrorResponse())
+
+                    CategoryViewRecord record = new CategoryViewRecord();
+                    record.setMetadata(new Metadata());
+                    record.getMetadata().setGenerateName("cvr-");
+                    record.setSpec(new CategoryViewRecord.Spec());
+                    record.getSpec().setCategoryName(sentence.getSpec().getCategoryName());
+                    record.getSpec().setEventType(
+                        isUnlike ? CategoryViewRecord.EventType.UNLIKE
+                            : CategoryViewRecord.EventType.LIKE);
+
+
+                    return client.update(sentence)
+                        .flatMap(updated -> {
+                            likeCache.put(checkKey, System.currentTimeMillis());
+                            likeCache.remove(oppositeKey);
+
+                            return client.create(record)
+                                .thenReturn(buildLikeResponse(updated, true,
+                                    isUnlike ? "取消点赞成功" : "点赞成功", "ok"));
+                        });
+                })
+                .defaultIfEmpty(buildErrorResponse())
                 .flatMap(response -> ServerResponse.ok().bodyValue(response));
         });
     }
 
-    private LikeResponse buildLikeResponse(Sentence sentence, boolean success, String message,
+    private @NonNull LikeResponse buildLikeResponse(Sentence sentence, boolean success, String message,
         String code) {
         LikeResponse response = new LikeResponse();
         response.setSuccess(success);
@@ -263,7 +293,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return response;
     }
 
-    private LikeResponse buildErrorResponse() {
+    private @NonNull LikeResponse buildErrorResponse() {
         LikeResponse response = new LikeResponse();
         response.setSuccess(false);
         response.setMessage("句子不存在");
@@ -272,7 +302,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return response;
     }
 
-    private SentenceItem toSentenceItem(Sentence s) {
+    private @NonNull SentenceItem toSentenceItem(@NonNull Sentence s) {
         SentenceItem item = new SentenceItem();
         item.setMetaName(s.getMetadata().getName());
         item.setAuthor(s.getSpec().getAuthor());
@@ -284,7 +314,8 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return item;
     }
 
-    private String formatRemainingTime(long seconds) {
+    @Contract(pure = true)
+    private @NonNull String formatRemainingTime(long seconds) {
         if (seconds < 60) {
             return seconds + " 秒";
         }
@@ -294,7 +325,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
         return (seconds / 3600) + " 小时";
     }
 
-    private String getClientIp(ServerHttpRequest request) {
+    private String getClientIp(@NonNull ServerHttpRequest request) {
         String forwardedFor = request.getHeaders().getFirst("X-Forwarded-For");
         if (forwardedFor != null && !forwardedFor.isBlank()) {
             return forwardedFor.split(",")[0].trim();
@@ -303,7 +334,7 @@ public class SentencePublicEndpoint implements CustomEndpoint {
                                                     .getHostAddress() : "unknown";
     }
 
-    @Scheduled(fixedRate = 21600000)
+    // 清理过期的点赞缓存方法
     public void cleanExpiredLikeCache() {
         settingConfig.getBasicConfig().doOnNext(config -> {
             long now = System.currentTimeMillis();

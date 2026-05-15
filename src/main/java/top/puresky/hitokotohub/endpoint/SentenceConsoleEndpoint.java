@@ -22,6 +22,8 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.dhatim.fastexcel.reader.ReadableWorkbook;
 import org.dhatim.fastexcel.reader.Row;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -87,14 +89,14 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return GroupVersion.parseAPIVersion(GROUP_VERSION);
     }
 
-    private Mono<ServerResponse> batchCreateSentence(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> batchCreateSentence(@NonNull ServerRequest request) {
         return request.principal().map(Principal::getName).flatMap(username -> {
             var sentenceFlux = request.bodyToFlux(Sentence.class);
             return createSentences(sentenceFlux, username);
         }).flatMap(result -> ServerResponse.ok().bodyValue(result));
     }
 
-    private Mono<ServerResponse> importExcelSentences(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> importExcelSentences(@NonNull ServerRequest request) {
         return request.principal().map(Principal::getName)
             .flatMap(username -> request.multipartData().flatMap(parts -> {
                 var file = parts.getFirst("file");
@@ -127,7 +129,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
                 e -> ServerResponse.badRequest().bodyValue(e.getMessage()));
     }
 
-    private Mono<BatchCreateSentenceResult> createSentences(
+    private @NonNull Mono<BatchCreateSentenceResult> createSentences(
         reactor.core.publisher.Flux<Sentence> sentenceFlux, String username) {
         AtomicInteger total = new AtomicInteger(0);
         AtomicInteger success = new AtomicInteger(0);
@@ -160,7 +162,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         }));
     }
 
-    private List<Sentence> parseExcelSentences(byte[] bytes, String categoryName,
+    private @NonNull List<Sentence> parseExcelSentences(byte[] bytes, String categoryName,
         String contentField, String authorField, String sourceField) throws IOException {
         try (var workbook = new ReadableWorkbook(new ByteArrayInputStream(bytes));
              var rows = workbook.getFirstSheet().openStream()) {
@@ -196,7 +198,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         }
     }
 
-    private Map<String, Integer> readHeaders(Row row) {
+    private @NonNull Map<String, Integer> readHeaders(Row row) {
         Map<String, Integer> headers = new HashMap<>();
         for (int columnIndex = 0; columnIndex < MAX_IMPORT_COLUMNS; columnIndex++) {
             var header = cellValue(row, columnIndex);
@@ -207,7 +209,7 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return headers;
     }
 
-    private Integer resolveColumn(Map<String, Integer> headers, String preferred,
+    private @Nullable Integer resolveColumn(Map<String, Integer> headers, String preferred,
         List<String> aliases) {
         if (preferred != null && !preferred.isBlank() && headers.containsKey(preferred)) {
             return headers.get(preferred);
@@ -222,11 +224,11 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return null;
     }
 
-    private String cellValue(Row row, int columnIndex) {
+    private @NonNull String cellValue(@NonNull Row row, int columnIndex) {
         return row.getCellAsString(columnIndex).orElse("").trim();
     }
 
-    private Sentence buildSentence(String categoryName, String content, String author,
+    private @NonNull Sentence buildSentence(String categoryName, String content, String author,
         String source) {
         var sentence = new Sentence();
         sentence.setMetadata(new Metadata());
@@ -245,13 +247,13 @@ public class SentenceConsoleEndpoint implements CustomEndpoint {
         return part instanceof FormFieldPart formFieldPart ? formFieldPart.value() : null;
     }
 
-    private Mono<ServerResponse> querySentences(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> querySentences(ServerRequest request) {
         var query = new SentenceQuery(request);
         return client.listBy(Sentence.class, query.toListOptions(), query.toPageRequest())
             .flatMap(sentences -> ServerResponse.ok().bodyValue(sentences));
     }
 
-    private Mono<ServerResponse> searchSentence(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> searchSentence(ServerRequest request) {
         var query = new SentenceQuery(request);
         return client.listBy(Sentence.class, query.toListOptions(), query.toPageRequest())
             .map(ListResult::getItems)

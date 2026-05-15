@@ -16,6 +16,7 @@
 
 export * from './api/category-public-v1alpha1-api';
 export * from './api/category-v1alpha1-api';
+export * from './api/category-view-record-v1alpha1-api';
 export * from './api/overview-v1alpha1-api';
 export * from './api/sentence-public-v1alpha1-api';
 export * from './api/sentence-v1alpha1-api';

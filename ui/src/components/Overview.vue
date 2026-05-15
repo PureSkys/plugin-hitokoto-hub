@@ -2,7 +2,7 @@
   <VCard>
     <div class="space-y-6">
       <!-- 概览卡片 -->
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
         <el-card class="custom-card">
           <div class="flex items-center justify-between">
             <div>
@@ -67,6 +67,37 @@
             </div>
           </div>
         </el-card>
+        <el-card class="custom-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-slate-500">总浏览量</p>
+              <p class="mt-1 text-3xl font-bold text-slate-900">
+                {{ viewStatsData.totalViewCount?.toLocaleString() || 0 }}
+              </p>
+            </div>
+            <div class="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-full">
+              <el-icon :size="24" color="#f97316">
+                <View/>
+              </el-icon>
+            </div>
+          </div>
+        </el-card>
+
+        <el-card class="custom-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-slate-500">今日浏览量</p>
+              <p class="mt-1 text-3xl font-bold text-indigo-600">
+                {{ viewStatsData.todayViewCount?.toLocaleString() || 0 }}
+              </p>
+            </div>
+            <div class="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full">
+              <el-icon :size="24" color="#6366f1">
+                <Clock/>
+              </el-icon>
+            </div>
+          </div>
+        </el-card>
       </div>
 
       <!-- 图表区域 -->
@@ -93,6 +124,43 @@
           <v-chart :option="statusChartOption" style="height: 320px; width: 100%;" autoresize/>
         </el-card>
       </div>
+
+      <!-- 浏览量趋势折线图 -->
+      <el-card class="custom-card">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-900">分类数据趋势</span>
+            <div class="flex items-center gap-2">
+              <el-select v-model="eventType" size="small" @change="fetchViewStats" style="width: 100px;">
+                <el-option label="浏览量" value="VIEW" />
+                <el-option label="点赞数" value="LIKE" />
+                <el-option label="取消点赞" value="UNLIKE" />
+              </el-select>
+              <el-radio-group v-model="viewStatsDays" size="small" @change="fetchViewStats">
+                <el-radio-button :value="7">7天</el-radio-button>
+                <el-radio-button :value="30">30天</el-radio-button>
+                <el-radio-button :value="90">90天</el-radio-button>
+              </el-radio-group>
+              <el-radio-group v-model="granularity" size="small" @change="fetchViewStats">
+                <el-radio-button value="day">按天</el-radio-button>
+                <el-radio-button value="week">按周</el-radio-button>
+                <el-radio-button value="month">按月</el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+        </template>
+        <div v-loading="viewStatsLoading" style="min-height: 320px;">
+          <v-chart
+                  v-if="viewStatsData.echartsData && viewStatsData.echartsData.series?.length > 0"
+                  :option="lineChartOption"
+                  style="height: 320px; width: 100%;"
+                  autoresize
+          />
+          <div v-else class="flex items-center justify-center" style="height: 320px;">
+            <el-empty description="暂无浏览量数据" />
+          </div>
+        </div>
+      </el-card>
 
       <!-- 分类详情表格 -->
       <el-card class="custom-card">
@@ -154,16 +222,17 @@
 
 <script setup lang="ts">
 import {computed, onMounted, ref} from 'vue'
-import {CircleCheck, CircleClose, Document, PriceTag} from '@element-plus/icons-vue'
+import {CircleCheck, CircleClose, Clock, Document, PriceTag, View} from '@element-plus/icons-vue'
 import VChart from 'vue-echarts'
 import {use} from 'echarts/core'
-import {BarChart, PieChart} from 'echarts/charts'
+import {BarChart, LineChart, PieChart} from 'echarts/charts'
 import {GridComponent, LegendComponent, TitleComponent, TooltipComponent} from 'echarts/components'
 import {CanvasRenderer} from 'echarts/renderers'
 import {Toast, VCard} from "@halo-dev/components"
 import {overviewV1alpha1ApiClient} from "@/api"
 
-use([PieChart, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer])
+// 注册 ECharts 组件
+use([PieChart, BarChart, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer])
 
 const statsData = ref({
   categoryCount: 0,
@@ -180,6 +249,23 @@ const statsData = ref({
   publishedSentenceCount: 0,
   sentenceCount: 0
 })
+
+// 浏览量统计数据
+const viewStatsData = ref({
+  success: false,
+  totalViewCount: 0,
+  todayViewCount: 0,
+  viewTimeSeries: [],
+  echartsData: {
+    xAxis: [],
+    series: []
+  }
+})
+
+const viewStatsLoading = ref(false)
+const viewStatsDays = ref(30)
+const granularity = ref('day')
+const eventType = ref('VIEW')
 
 const publishedPercentage = computed(() => {
   if (statsData.value.sentenceCount === 0) return 0
@@ -309,11 +395,93 @@ const statusChartOption = computed(() => {
     ]
   }
 })
+
+// 折线图配置
+const lineChartOption = computed(() => {
+  const echartsData = viewStatsData.value.echartsData
+  if (!echartsData || !echartsData.series || echartsData.series.length === 0) {
+    return {}
+  }
+
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {type: 'shadow'}
+    },
+    legend: {
+      data: echartsData.series.map((s: any) => s.displayName || s.name),
+      top: 0,
+      right: 0,
+      type: 'scroll'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: echartsData.xAxis,
+      name: '日期',
+      axisLabel: {
+        rotate: echartsData.xAxis.length > 10 ? 30 : 0,
+        interval: 0
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '数据量'
+    },
+    series: echartsData.series.map((s: any, index: number) => ({
+      name: s.displayName || s.name,
+      type: 'line',
+      data: s.data,
+      smooth: s.smooth,
+      lineStyle: {
+        width: 2,
+        color: colors[index % colors.length]
+      },
+      symbol: 'circle',
+      symbolSize: 6,
+      areaStyle: {
+        opacity: 0.1,
+        color: colors[index % colors.length]
+      }
+    }))
+  }
+})
+
 onMounted(() => {
   overviewV1alpha1ApiClient.overview.getOverview().then(response => {
     statsData.value = response.data as any
   })
+  fetchViewStats()
 })
+
+// 获取浏览量统计数据
+const fetchViewStats = async () => {
+  viewStatsLoading.value = true
+  try {
+    const response = await overviewV1alpha1ApiClient.overview.getViewStatistics({
+      params: {
+        days: viewStatsDays.value,
+        granularity: granularity.value,
+        eventType: eventType.value
+      }
+    })
+    viewStatsData.value = response.data as any
+  } catch (error) {
+    console.error('获取浏览量统计数据失败:', error)
+    Toast.error('获取浏览量统计数据失败')
+  } finally {
+    viewStatsLoading.value = false
+  }
+}
+
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).then(() => {
     Toast.success("已复制到剪贴板");

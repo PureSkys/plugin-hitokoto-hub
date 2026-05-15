@@ -7,18 +7,21 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import run.halo.app.extension.ListOptions;
 import run.halo.app.extension.ListResult;
+import run.halo.app.extension.Metadata;
 import run.halo.app.extension.PageRequestImpl;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.index.query.Queries;
 import run.halo.app.theme.finders.Finder;
 import top.puresky.hitokotohub.config.SettingConfig;
 import top.puresky.hitokotohub.extension.Category;
+import top.puresky.hitokotohub.extension.CategoryViewRecord;
 import top.puresky.hitokotohub.extension.Sentence;
 import top.puresky.hitokotohub.finder.HitokotoFinder;
 
@@ -91,9 +94,18 @@ public class HitokotoFinderImpl implements HitokotoFinder {
                                             if (sentence.getStatus() == null) {
                                                 sentence.setStatus(new Sentence.Status());
                                             }
-                                            sentence.getStatus().setViewCount(
-                                                sentence.getStatus().getViewCount() + 1);
-                                            return client.update(sentence);
+                                            sentence.getStatus().setViewCount(sentence.getStatus().getViewCount() + 1);
+
+                                            // 记录分类浏览
+                                            CategoryViewRecord record = new CategoryViewRecord();
+                                            record.setMetadata(new Metadata());
+                                            record.getMetadata().setGenerateName("cvr-");
+                                            record.setSpec(new CategoryViewRecord.Spec());
+                                            record.getSpec().setCategoryName(sentence.getSpec().getCategoryName());
+                                            record.getSpec().setEventType(CategoryViewRecord.EventType.VIEW);
+                                            return client.update(sentence)
+                                                .then(client.create(record))
+                                                .thenReturn(sentence);
                                         })
                                         .thenMany(Flux.fromIterable(randomItems));
                                 }
@@ -113,12 +125,14 @@ public class HitokotoFinderImpl implements HitokotoFinder {
 
     // 解析多行文本为分类 ID 列表
     private List<String> parseCategoryLines(String raw) {
-        if (raw == null || raw.isBlank()) return Collections.emptyList();
+        if (raw == null || raw.isBlank()) {
+            return Collections.emptyList();
+        }
         return Arrays.stream(raw.split("\\n")).map(String::trim)
             .filter(StringUtils::isNotBlank).toList();
     }
 
-    private SentenceVo toSentenceVo(Sentence s) {
+    private SentenceVo toSentenceVo(@NonNull Sentence s) {
         var spec = s.getSpec();
         var status = s.getStatus();
         return SentenceVo.builder().name(s.getMetadata().getName()).author(spec.getAuthor())
@@ -128,7 +142,7 @@ public class HitokotoFinderImpl implements HitokotoFinder {
             .viewCount(status != null ? status.getViewCount() : 0).build();
     }
 
-    private CategoryVo toCategoryVo(Category c) {
+    private CategoryVo toCategoryVo(@NonNull Category c) {
         var spec = c.getSpec();
         var status = c.getStatus();
         return CategoryVo.builder().name(c.getMetadata().getName()).displayName(spec.getName())

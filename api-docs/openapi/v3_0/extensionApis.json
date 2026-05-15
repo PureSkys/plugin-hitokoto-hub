@@ -5,7 +5,7 @@
     "version" : "2.24.1"
   },
   "servers" : [ {
-    "url" : "http://localhost:30585",
+    "url" : "http://localhost:62213",
     "description" : "Generated server url"
   } ],
   "security" : [ {
@@ -29,6 +29,25 @@
           }
         },
         "summary" : "获取概览信息",
+        "tags" : [ "OverviewV1alpha1" ]
+      }
+    },
+    "/apis/console.api.hitokotohub.puresky.top/v1alpha1/overview/view-statistics" : {
+      "get" : {
+        "operationId" : "getViewStatistics",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ViewStatisticsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "获取分类浏览量统计数据（用于折线图）",
         "tags" : [ "OverviewV1alpha1" ]
       }
     },
@@ -420,6 +439,217 @@
         "tags" : [ "CategoryV1alpha1" ]
       }
     },
+    "/apis/hitokotohub.puresky.top/v1alpha1/categoryviewrecords" : {
+      "get" : {
+        "description" : "List CategoryViewRecord",
+        "operationId" : "listCategoryViewRecord",
+        "parameters" : [ {
+          "description" : "Page number. Default is 0.",
+          "in" : "query",
+          "name" : "page",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Size number. Default is 0.",
+          "in" : "query",
+          "name" : "size",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "description" : "Label selector. e.g.: hidden!=true",
+          "in" : "query",
+          "name" : "labelSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Field selector. e.g.: metadata.name==halo",
+          "in" : "query",
+          "name" : "fieldSelector",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }, {
+          "description" : "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryViewRecordList"
+                }
+              }
+            },
+            "description" : "Response categoryviewrecords"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      },
+      "post" : {
+        "description" : "Create CategoryViewRecord",
+        "operationId" : "createCategoryViewRecord",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryViewRecord"
+              }
+            }
+          },
+          "description" : "Fresh categoryviewrecord"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryViewRecord"
+                }
+              }
+            },
+            "description" : "Response categoryviewrecords created just now"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      }
+    },
+    "/apis/hitokotohub.puresky.top/v1alpha1/categoryviewrecords/{name}" : {
+      "delete" : {
+        "description" : "Delete CategoryViewRecord",
+        "operationId" : "deleteCategoryViewRecord",
+        "parameters" : [ {
+          "description" : "Name of categoryviewrecord",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Response categoryviewrecord deleted just now"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      },
+      "get" : {
+        "description" : "Get CategoryViewRecord",
+        "operationId" : "getCategoryViewRecord",
+        "parameters" : [ {
+          "description" : "Name of categoryviewrecord",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryViewRecord"
+                }
+              }
+            },
+            "description" : "Response single categoryviewrecord"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      },
+      "patch" : {
+        "description" : "Patch CategoryViewRecord",
+        "operationId" : "patchCategoryViewRecord",
+        "parameters" : [ {
+          "description" : "Name of categoryviewrecord",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/JsonPatch"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryViewRecord"
+                }
+              }
+            },
+            "description" : "Response categoryviewrecord patched just now"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      },
+      "put" : {
+        "description" : "Update CategoryViewRecord",
+        "operationId" : "updateCategoryViewRecord",
+        "parameters" : [ {
+          "description" : "Name of categoryviewrecord",
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryViewRecord"
+              }
+            }
+          },
+          "description" : "Updated categoryviewrecord"
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryViewRecord"
+                }
+              }
+            },
+            "description" : "Response categoryviewrecords updated just now"
+          }
+        },
+        "tags" : [ "CategoryViewRecordV1alpha1" ]
+      }
+    },
     "/apis/hitokotohub.puresky.top/v1alpha1/sentences" : {
       "get" : {
         "description" : "List Sentence",
@@ -783,6 +1013,25 @@
           }
         }
       },
+      "CategoryDetail" : {
+        "type" : "object",
+        "properties" : {
+          "categoryName" : {
+            "type" : "string",
+            "description" : "分类名称"
+          },
+          "count" : {
+            "type" : "integer",
+            "description" : "数量",
+            "format" : "int64"
+          },
+          "displayName" : {
+            "type" : "string",
+            "description" : "分类显示名称"
+          }
+        },
+        "description" : "各分类详情"
+      },
       "CategoryDistribution" : {
         "type" : "object",
         "properties" : {
@@ -910,6 +1159,73 @@
           }
         }
       },
+      "CategoryViewRecord" : {
+        "required" : [ "apiVersion", "kind", "metadata", "spec" ],
+        "type" : "object",
+        "properties" : {
+          "apiVersion" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "metadata" : {
+            "$ref" : "#/components/schemas/Metadata"
+          },
+          "spec" : {
+            "$ref" : "#/components/schemas/Spec"
+          }
+        }
+      },
+      "CategoryViewRecordList" : {
+        "required" : [ "first", "hasNext", "hasPrevious", "items", "last", "page", "size", "total", "totalPages" ],
+        "type" : "object",
+        "properties" : {
+          "first" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the first page."
+          },
+          "hasNext" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "hasPrevious" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page has previous page."
+          },
+          "items" : {
+            "type" : "array",
+            "description" : "A chunk of items.",
+            "items" : {
+              "$ref" : "#/components/schemas/CategoryViewRecord"
+            }
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Indicates whether current page is the last page."
+          },
+          "page" : {
+            "type" : "integer",
+            "description" : "Page number, starts from 1. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "description" : "Size of each page. If not set or equal to 0, it means no pagination.",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "description" : "Total elements.",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "description" : "Indicates total pages.",
+            "format" : "int64"
+          }
+        }
+      },
       "CopyOperation" : {
         "required" : [ "op", "from", "path" ],
         "type" : "object",
@@ -931,6 +1247,56 @@
             "example" : "/a/b/c"
           }
         }
+      },
+      "EChartsData" : {
+        "type" : "object",
+        "properties" : {
+          "series" : {
+            "type" : "array",
+            "description" : "系列数据",
+            "items" : {
+              "$ref" : "#/components/schemas/EChartsSeries"
+            }
+          },
+          "xaxis" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "description" : "ECharts 格式数据"
+      },
+      "EChartsSeries" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "description" : "数据点",
+            "items" : {
+              "type" : "integer",
+              "description" : "数据点",
+              "format" : "int64"
+            }
+          },
+          "displayName" : {
+            "type" : "string",
+            "description" : "分类显示名称"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "分类名称"
+          },
+          "smooth" : {
+            "type" : "boolean",
+            "description" : "是否平滑曲线"
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "图表类型"
+          }
+        },
+        "description" : "系列数据"
       },
       "ExcelImportRequest" : {
         "required" : [ "categoryName", "file" ],
@@ -1302,6 +1668,20 @@
           }
         }
       },
+      "Spec" : {
+        "type" : "object",
+        "properties" : {
+          "categoryName" : {
+            "type" : "string",
+            "description" : "分类名称（唯一标识）"
+          },
+          "eventType" : {
+            "type" : "string",
+            "description" : "事件类型：VIEW / LIKE / UNLIKE",
+            "enum" : [ "VIEW", "LIKE", "UNLIKE" ]
+          }
+        }
+      },
       "TestOperation" : {
         "required" : [ "op", "path", "value" ],
         "type" : "object",
@@ -1318,6 +1698,61 @@
           },
           "value" : {
             "description" : "Value can be any JSON value"
+          }
+        }
+      },
+      "TimePoint" : {
+        "type" : "object",
+        "properties" : {
+          "details" : {
+            "type" : "array",
+            "description" : "各分类详情",
+            "items" : {
+              "$ref" : "#/components/schemas/CategoryDetail"
+            }
+          },
+          "time" : {
+            "type" : "string",
+            "description" : "时间点"
+          },
+          "totalCount" : {
+            "type" : "integer",
+            "description" : "该时间点总数",
+            "format" : "int64"
+          }
+        },
+        "description" : "时间序列数据"
+      },
+      "ViewStatisticsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "echartsData" : {
+            "$ref" : "#/components/schemas/EChartsData"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "提示信息"
+          },
+          "success" : {
+            "type" : "boolean",
+            "description" : "是否成功"
+          },
+          "timeSeries" : {
+            "type" : "array",
+            "description" : "时间序列数据",
+            "items" : {
+              "$ref" : "#/components/schemas/TimePoint"
+            }
+          },
+          "todayViewCount" : {
+            "type" : "integer",
+            "description" : "今日",
+            "format" : "int64"
+          },
+          "totalViewCount" : {
+            "type" : "integer",
+            "description" : "总计",
+            "format" : "int64"
           }
         }
       }
