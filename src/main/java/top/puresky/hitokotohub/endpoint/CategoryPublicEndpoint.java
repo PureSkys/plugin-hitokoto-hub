@@ -6,6 +6,7 @@ import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -41,7 +42,7 @@ public class CategoryPublicEndpoint implements CustomEndpoint {
         return GroupVersion.parseAPIVersion(GROUP_VERSION);
     }
 
-    private Mono<ServerResponse> listCategories(ServerRequest request) {
+    private @NonNull Mono<ServerResponse> listCategories(ServerRequest request) {
         var listOptions = new ListOptions();
         listOptions.setFieldSelector(
             FieldSelector.of(Queries.isNull("metadata.deletionTimestamp")));

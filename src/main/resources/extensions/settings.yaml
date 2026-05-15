@@ -45,3 +45,15 @@ spec:
           label: 启用浏览量统计
           value: true
           help: 随机获取句子时是否自动增加浏览量
+        - $formkit: number
+          name: statsMaxKeep
+          label: 统计数据最大保留条数
+          value: 1000
+          validation: required|number|min:100|max:10000
+          help: 超过此数量将自动删除最旧的数据
+        - $formkit: number
+          name: statsRetentionDays
+          label: 统计数据保留天数
+          value: 30
+          validation: required|number|min:7|max:365
+          help: 超过此天数的数据将被清理

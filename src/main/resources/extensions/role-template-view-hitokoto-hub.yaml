@@ -14,5 +14,5 @@ rules:
     resources: [ "sentences", "categories" ]
     verbs: [ "get", "list", "watch" ]
   - apiGroups: [ "console.api.hitokotohub.puresky.top" ]
-    resources: [ "overview", "sentence" ]
+    resources: [ "overview", "sentence" ,"overview/view-statistics" ]
     verbs: [ "get", "list" ]

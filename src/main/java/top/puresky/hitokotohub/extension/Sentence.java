@@ -10,8 +10,11 @@ import run.halo.app.extension.GVK;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@GVK(group = "hitokotohub.puresky.top", version = "v1alpha1", kind = "Sentence", plural =
-    "sentences", singular = "sentence")
+@GVK(group = "hitokotohub.puresky.top",
+    version = "v1alpha1",
+    kind = "Sentence",
+    plural = "sentences",
+    singular = "sentence")
 public class Sentence extends AbstractExtension {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)

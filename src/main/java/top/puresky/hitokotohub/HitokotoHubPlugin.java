@@ -7,6 +7,7 @@ import run.halo.app.extension.index.IndexSpecs;
 import run.halo.app.plugin.BasePlugin;
 import run.halo.app.plugin.PluginContext;
 import top.puresky.hitokotohub.extension.Category;
+import top.puresky.hitokotohub.extension.CategoryViewRecord;
 import top.puresky.hitokotohub.extension.Sentence;
 
 /**
@@ -62,6 +63,15 @@ public class HitokotoHubPlugin extends BasePlugin {
         });
 
         schemeManager.register(Category.class);
+
+        schemeManager.register(CategoryViewRecord.class,
+            categoryViewRecordIndexSpecs -> categoryViewRecordIndexSpecs.add(
+                IndexSpecs.<CategoryViewRecord, String>single("spec.eventType", String.class)
+                    .indexFunc(
+                        categoryViewRecord -> categoryViewRecord.getSpec().getEventType().name())
+                    .nullable(true)
+                    .build()
+            ));
 
         System.out.println("✅ 一言数据中心插件启动成功！");
     }

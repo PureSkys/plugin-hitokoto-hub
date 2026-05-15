@@ -8,6 +8,7 @@ import static run.halo.app.extension.router.QueryParamBuildUtil.sortParameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.annotation.Nullable;
 import java.util.Optional;
+import org.jspecify.annotations.NonNull;
 import org.springdoc.core.fn.builders.operation.Builder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -17,7 +18,7 @@ import run.halo.app.extension.router.SortableRequest;
 
 public class SentenceQuery extends SortableRequest {
 
-    public SentenceQuery(ServerRequest request) {
+    public SentenceQuery(@NonNull ServerRequest request) {
         super(request.exchange());
     }
 

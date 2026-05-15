@@ -2,9 +2,10 @@ import {axiosInstance} from '@halo-dev/api-client'
 import type {SentenceList} from './generated'
 import {
   CategoryV1alpha1Api,
+  CategoryViewRecordV1alpha1Api,
   OverviewV1alpha1Api,
   SentencePublicV1alpha1Api,
-  SentenceV1alpha1Api,
+  SentenceV1alpha1Api
 } from './generated'
 
 interface QuerySentencesParams {
@@ -32,9 +33,14 @@ const overviewV1alpha1ApiClient = {
 const sentencePublicV1alpha1ApiClient = {
   sentence: new SentencePublicV1alpha1Api(undefined, '', axiosInstance),
 }
+const categoryViewRecordV1alpha1ApiClient = {
+  categoryViewRecord: new CategoryViewRecordV1alpha1Api(undefined, '', axiosInstance),
+}
+
 export {
   categoryCoreApiClient,
   sentenceCoreApiClient,
   overviewV1alpha1ApiClient,
   sentencePublicV1alpha1ApiClient,
+  categoryViewRecordV1alpha1ApiClient
 }

@@ -22,5 +22,9 @@ public interface SettingConfig {
         private Integer likeCooldown;
         @Schema(description = "启用浏览量统计")
         private Boolean enableViewCount;
+        @Schema(description = "统计数据最大保留条数")
+        private Integer statsMaxKeep;
+        @Schema(description = "统计数据保留天数")
+        private Integer statsRetentionDays;
     }
 }
