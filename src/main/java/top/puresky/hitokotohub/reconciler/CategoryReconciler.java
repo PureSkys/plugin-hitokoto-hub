@@ -13,6 +13,7 @@ import run.halo.app.extension.controller.ControllerBuilder;
 import run.halo.app.extension.controller.Reconciler;
 import run.halo.app.extension.index.query.Queries;
 import top.puresky.hitokotohub.extension.Category;
+import top.puresky.hitokotohub.extension.CategoryViewRecord;
 import top.puresky.hitokotohub.extension.Sentence;
 
 @Component
@@ -33,10 +34,17 @@ public class CategoryReconciler implements Reconciler<Reconciler.Request> {
                 client.update(category);
 
                 String categoryMetadataName = category.getMetadata().getName();
-                ListOptions listSentenceOptions = ListOptions.builder()
-                    .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName)).build();
-                client.listAll(Sentence.class, listSentenceOptions, Sort.unsorted())
+
+                client.listAll(Sentence.class, ListOptions.builder()
+                            .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName)).build(),
+                        Sort.unsorted())
                     .forEach(client::delete);
+
+                client.listAll(CategoryViewRecord.class, ListOptions.builder()
+                            .fieldQuery(Queries.equal("spec.categoryName", categoryMetadataName)).build(),
+                        Sort.unsorted())
+                    .forEach(client::delete);
+
                 // 移除删除分类终结器
                 ExtensionUtil.removeFinalizers(category.getMetadata(), Set.of(FINALIZER_NAME));
                 client.update(category);
