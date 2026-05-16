@@ -65,13 +65,23 @@ public class HitokotoHubPlugin extends BasePlugin {
         schemeManager.register(Category.class);
 
         schemeManager.register(CategoryViewRecord.class,
-            categoryViewRecordIndexSpecs -> categoryViewRecordIndexSpecs.add(
-                IndexSpecs.<CategoryViewRecord, String>single("spec.eventType", String.class)
-                    .indexFunc(
-                        categoryViewRecord -> categoryViewRecord.getSpec().getEventType().name())
-                    .nullable(true)
-                    .build()
-            ));
+            categoryViewRecordIndexSpecs -> {
+                categoryViewRecordIndexSpecs.add(
+                    IndexSpecs.<CategoryViewRecord, String>single("spec.eventType", String.class)
+                        .indexFunc(
+                            categoryViewRecord -> categoryViewRecord.getSpec().getEventType()
+                                .name())
+                        .nullable(false)
+                        .build()
+                );
+                categoryViewRecordIndexSpecs.add(
+                    IndexSpecs.<CategoryViewRecord, String>single("spec.categoryName", String.class)
+                        .indexFunc(
+                            categoryViewRecord -> categoryViewRecord.getSpec().getCategoryName())
+                        .nullable(false)
+                        .build()
+                );
+            });
 
         System.out.println("✅ 一言数据中心插件启动成功！");
     }
